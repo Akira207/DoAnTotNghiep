@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-// 🔥 CORE API
+// CORE API
 router.post("/create-full-order", createFullOrder);
 
 // CRUD
