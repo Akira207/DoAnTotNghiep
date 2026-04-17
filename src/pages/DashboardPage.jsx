@@ -1,41 +1,52 @@
-import Sidebar from "../features/DashBoard/Sidebar";
-import Header from "../features/DashBoard/Header";
-import MobileSearch from "../features/DashBoard/MobileSearch";
-import StatsGrid from "../features/DashBoard/StatsGrid";
-import ChartSection from "../features/DashBoard/ChartSection";
-import ProjectsSection from "../features/DashBoard/ProjectsSection";
-import OrdersSection from "../features/DashBoard/OrdersSection";
-import BottomNav from "../features/DashBoard/BottomNav";
+import { useState, useEffect } from "react";
+
+import Sidebar from "../components/layouts/SideBar";
+import MobileHeader from "../components/layouts/MobileHeader";
+import DashboardHeader from "../features/dashBoard/DashBoardHeader";
+import KPISection from "../features/dashBoard/KPISection";
+import ChartSection from "../features/dashBoard/ChartSection";
+import StatusCard from "../features/dashBoard/StatusCard";
+import NewOrdersTable from "../features/dashBoard/NewOrdersTable";
 
 export default function DashboardPage() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
+  }, [isSidebarOpen]);
+
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
   return (
-    <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
-      <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+    <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
+      {/* Overlay */}
+      <div
+        onClick={toggleSidebar}
+        className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition-all duration-300
+        ${isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+      />
 
-        <Sidebar />
+      {/* Sidebar */}
+      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
-          <Header />
-          <div className="flex-1 overflow-y-auto pb-20 md:pb-8">
-            
-            <MobileSearch />
+      {/* Mobile Header */}
+      <MobileHeader onOpenSidebar={toggleSidebar} />
 
-            <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-              <StatsGrid />
+      {/* Main */}
+      <main className="md:ml-[280px] p-6 lg:p-10 space-y-10">
+        <DashboardHeader />
+        <KPISection />
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                <ChartSection />
-                <ProjectsSection />
-              </div>
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <ChartSection />
+          <StatusCard />
+        </section>
 
-              <OrdersSection />
-            </div>
-          </div>
-
-          <BottomNav />
-        </main>
-
-      </div>
+          <section className="bg-white rounded shadow-sm overflow-hidden">
+            <NewOrdersTable />
+          </section>
+        
+      </main>
     </div>
   );
 }

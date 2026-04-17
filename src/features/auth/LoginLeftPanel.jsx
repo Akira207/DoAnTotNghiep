@@ -1,40 +1,65 @@
-export default function LoginLeftPanel() {
+function LoginLeftPanel() {
   return (
-    <div className="hidden lg:flex lg:col-span-6 bg-inverse-surface relative overflow-hidden flex-col justify-between p-12">
+    <div className="lg:col-span-5 bg-primary p-8 lg:p-16 flex-col justify-between relative overflow-hidden hidden lg:flex">
       
-      <div className="z-10">
-        <div className="text-4xl font-black text-white tracking-tighter mb-4">
-          PLT
+      {/* Top Content */}
+      <div className="relative z-10">
+        
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-12">
+          <div className="w-10 h-10 bg-white rounded flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary font-bold">
+              factory
+            </span>
+          </div>
+          <span className="text-white text-2xl font-black tracking-tighter">
+            PLT Interior
+          </span>
         </div>
-        <h1 className="text-white text-3xl font-bold leading-tight tracking-tight max-w-sm">
-          Quản lý Xưởng Sản xuất Nội thất.
+
+        {/* Title */}
+        <h1 className="text-white text-4xl font-bold leading-tight tracking-tight mb-6">
+          Kiến tạo không gian,<br />Quản trị chuẩn xác.
         </h1>
+
+        {/* Description */}
+        <p className="text-on-primary/80 text-lg font-light leading-relaxed max-w-xs">
+          Hệ thống quản lý sản xuất nội thất dành cho những nghệ nhân đương đại.
+        </p>
       </div>
 
-      <div className="z-10 space-y-6">
-        <Feature icon="architecture" title="Quy trình nghệ nhân" desc="Tối ưu hóa từng công đoạn sản xuất mộc và hoàn thiện." />
-        <Feature icon="dashboard_customize" title="Báo cáo thời gian thực" desc="Theo dõi tiến độ đơn hàng chính xác đến từng centimet." />
+      {/* Bottom Content */}
+      <div className="relative z-10">
+        
+        {/* Avatars */}
+        <div className="flex -space-x-3 mb-4">
+          <img
+            className="w-10 h-10 rounded-full border-2 border-primary"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJyaOQyJwLrh3BsjGKkv5_e08OMa9rkpSEDhkyuZWsMZlMZOourxWKrcepdFoR1Viy_oR58zdHJN8dHMRU9b5bwLn9slwnoz0sny3WEYwKhz2lqGNqDaq1uIn84znIU4sUfga5mobf8AH3PhYoUFf53GclJldIYNSukfZpEoPtOJy0KIMBi22lZqpDUw63ep7i9jzJqCSpTEkObHpuMYOAttGlOzXslXougHucFzd8IhgMPAumi3dYNMnFV7fP1OPVD8I4IBG6MecA"
+            alt="user1"
+          />
+          <img
+            className="w-10 h-10 rounded-full border-2 border-primary"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuARXx169WQcs3npJhFywmkUaHLrWWfQDpXVj5iLdkBWSGL-q8YHXEjFmXjUhrFGT1YwbDsdG2g7QmE67pxLCrVwSJjVmC5B-cwfgw5pxI0HUGCVr6UsU_9YGc9IZpFksugYx0EV-VSHTF7rsEfnaLUbakfgmtgPNRRhyETnOtuOjlHdQcY_kStVfnBXd0aCoFAmn1aaQqgKe67uxg0rQjK9Dfd9mZfsi-jW9VvyKUN3nObEiwD1gqCkZivqktLXF1Mdc6UxVY1eMFaj"
+            alt="user2"
+          />
+          <img
+            className="w-10 h-10 rounded-full border-2 border-primary"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh6v1ZrXcdldRsU4TaGUqiuIe6fCe9LvGUqQsMOM9zkPV2rhlwbCNi7hpcL82gdHKHXYhQSnRCBxFThvlOm7QV9bgXwq56dHl1JVGhON0IZCh4e9E_kf0C0UcZSB2pMiD-yzXRGPkFiL7aVwoXISbWZ4XHaDutXEDZmgiMhNLMgRK6jbGFzkC4BjqowCirgIR8_oDRfIIgSGeG7vqWNAQyAGfGeQO5nRRYM7sDq658_pl5ATpLeFn_ougE4zbJIWXieQHh1XwXwPMq"
+            alt="user3"
+          />
+        </div>
+
+        {/* Quote */}
+        <p className="text-white/70 text-sm italic">
+          "PLT Interior đã giúp chúng tôi tối ưu hóa quy trình sản xuất, giảm thiểu lãng phí và nâng cao chất lượng sản phẩm. Một công cụ không thể thiếu cho bất kỳ xưởng nội thất nào muốn phát triển bền vững."
+        </p>
       </div>
 
-      <img
-        alt="Interior Design Workshop"
-        className="absolute inset-0 w-full h-full object-cover opacity-20"
-        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVOvbwMm3sUnh9DZODG-qKHupkPvyPLGmeaB0A43sESO1HmXN7JdaOkq8GY7Xt0p4f4fjKa76a0AnIYoS3s8GAAOUz2j1sRvwydC7mZmgKzX-DWYQxB4JNmpCZ3R1ttU1GRGzGF96p1yNklP-CJ5COnkmJbch8xC757kMHHWvi-VKd_aFOScRF9r3GR1VNBGmpb_YVzpYrVfxueT2qne43R57j5jcteRqA4EXbxoql7AFe49j6zleQNVImnUGgcveou7fl1fHB2mDQ"
-      />
+      {/* Background Shape */}
+      <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full -mb-32 -mr-32"></div>
     </div>
   );
 }
 
-function Feature({ icon, title, desc }) {
-  return (
-    <div className="flex items-start gap-4">
-      <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center shrink-0">
-        <span className="material-symbols-outlined text-white">{icon}</span>
-      </div>
-      <div>
-        <p className="text-white font-semibold">{title}</p>
-        <p className="text-white/60 text-sm">{desc}</p>
-      </div>
-    </div>
-  );
-}
+export default LoginLeftPanel;

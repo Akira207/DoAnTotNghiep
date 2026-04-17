@@ -1,18 +1,20 @@
-import LoginForm from "../features/auth/LoginForm";
 import LoginLeftPanel from "../features/auth/LoginLeftPanel";
+import LoginForm from "../features/auth/LoginForm";
 import LoginFooter from "../features/auth/LoginFooter";
 
-export default function LoginPage() {
+function LoginPage() {
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+    <div className="bg-surface text-on-background min-h-screen flex flex-col">
       
-      <main className="flex-grow flex items-center justify-center p-6 md:p-12 relative overflow-hidden">
+      <main className="flex-grow flex items-center justify-center p-6 lg:p-12 relative overflow-hidden">
         
-        <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-[-10%] left-[-5%] w-[300px] h-[300px] bg-secondary/5 rounded-full blur-3xl"></div>
+        {/* Background blur */}
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[60%] bg-surface-container-high rounded-full blur-[120px] opacity-40"></div>
+        <div className="absolute bottom-[-5%] left-[-5%] w-[30%] h-[50%] bg-primary-container rounded-full blur-[100px] opacity-20"></div>
 
-        <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-12 bg-surface-container-lowest rounded-xl shadow-[0_32px_64px_-12px_rgba(35,44,81,0.08)] overflow-hidden border border-outline-variant/10">
-          
+        {/* Container */}
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 shadow-2xl rounded-lg overflow-hidden bg-surface-container-lowest border border-surface-container">
+
           <LoginLeftPanel />
           <LoginForm />
 
@@ -23,3 +25,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default LoginPage;
