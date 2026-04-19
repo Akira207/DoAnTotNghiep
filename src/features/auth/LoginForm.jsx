@@ -1,7 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { login } from "../../services/authService";
+
+import { useAuth } from "../../context/AuthContext";
 
 const LoginForm = () => {
+  const { login: authLogin } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -16,10 +26,40 @@ const LoginForm = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login data:", form);
-    // TODO: gọi API sau
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await login({
+        username: form.username,
+        password: form.password,
+      });
+
+      console.log("LOGIN SUCCESS:", res);
+
+      if (!res?.token) {
+        throw new Error("No token returned");
+      }
+
+      authLogin(res);
+
+      if (res.user.role === "worker") {
+        navigate("/production", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      console.log("LOGIN ERROR:", err);
+      setError(
+        err?.response?.data?.message || err.message || "Đăng nhập thất bại",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,6 +84,11 @@ const LoginForm = () => {
             Đăng nhập để quản lý quy trình sản xuất của bạn.
           </p>
         </div>
+
+        {/* ERROR (KHÔNG ĐỔI UI) */}
+        {error && (
+          <div className="mb-4 text-red-500 text-sm font-medium">{error}</div>
+        )}
 
         {/* Form */}
         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -120,12 +165,14 @@ const LoginForm = () => {
           {/* Submit */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-primary text-white py-4 rounded-lg font-bold flex items-center justify-center gap-2"
           >
-            Đăng nhập
-            <span className="material-symbols-outlined">
-              arrow_forward
-            </span>
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+
+            {!loading && (
+              <span className="material-symbols-outlined">arrow_forward</span>
+            )}
           </button>
         </form>
 

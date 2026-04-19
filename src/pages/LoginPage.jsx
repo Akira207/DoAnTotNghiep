@@ -1,8 +1,21 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import LoginLeftPanel from "../features/auth/LoginLeftPanel";
 import LoginForm from "../features/auth/LoginForm";
 import LoginFooter from "../features/auth/LoginFooter";
 
 function LoginPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, loading, navigate]);
+
   return (
     <div className="bg-surface text-on-background min-h-screen flex flex-col">
       

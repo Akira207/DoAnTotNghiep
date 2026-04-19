@@ -10,9 +10,9 @@ const DashboardHeader = () => {
   return (
     <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
       <div>
-        <h2 className="text-3xl font-black text-on-surface tracking-tight leading-none mb-2">
+        <h3 className="text-3xl font-black text-on-surface tracking-tight leading-none mb-2">
           Tổng quan hệ thống
-        </h2>
+        </h3>
         <p className="text-on-surface-variant font-medium">
           Chào mừng trở lại, hôm nay là {formattedDate}.
         </p>

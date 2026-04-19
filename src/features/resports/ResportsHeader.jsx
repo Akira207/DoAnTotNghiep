@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const WarehouseHeader = () => {
+const ResportsHeader = () => {
   const [range, setRange] = useState("month");
 
   const options = [
@@ -21,12 +21,12 @@ const WarehouseHeader = () => {
           <span className="material-symbols-outlined text-sm">
             chevron_right
           </span>
-          <span className="text-primary font-bold">Kho Thành phẩm</span>
+          <span className="text-primary font-bold">Báo Cáo & Thống Kê</span>
         </nav>
 
         {/* Title */}
         <h2 className="text-3xl font-black text-on-surface tracking-tight">
-          Quản lý Kho Thành phẩm
+          Báo Cáo & Thống Kê
         </h2>
       </div>
 
@@ -55,4 +55,4 @@ const WarehouseHeader = () => {
   );
 };
 
-export default WarehouseHeader;
+export default ResportsHeader;

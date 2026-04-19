@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 
 import Sidebar from "../../components/layouts/SideBar";
 import MobileHeader from "../../components/layouts/MobileHeader";
-import WarehouseHeader from "../../features/ProductsWarehouse/WarehouseHeader";
-import WarehouseStats from "../../features/ProductsWarehouse/WarehouseStats";
-import WarehouseTable from "../../features/ProductsWarehouse/WarehouseTable";
-import WarehouseBottomCards from "../../features/ProductsWarehouse/WarehouseBottomCards";
+import WarehouseHeader from "../../features/productsWarehouse/WarehouseHeader";
+import WarehouseStats from "../../features/productsWarehouse/WarehouseStats";
+import WarehouseTable from "../../features/productsWarehouse/WarehouseTable";
+import WarehouseBottomCards from "../../features/productsWarehouse/WarehouseBottomCards";
 
 export default function ProductsWarehousePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

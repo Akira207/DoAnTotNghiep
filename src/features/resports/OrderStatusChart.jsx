@@ -1,0 +1,100 @@
+export default function OrderStatusChart() {
+  const data = [
+    {
+      label: "Đang sản xuất",
+      value: 225,
+      percent: 50,
+      color: "#0058BA",
+    },
+    {
+      label: "Chờ xử lý",
+      value: 113,
+      percent: 25,
+      color: "#FF8C00",
+    },
+    {
+      label: "Hoàn thành",
+      value: 67,
+      percent: 15,
+      color: "#006A35",
+    },
+    {
+      label: "Huỷ",
+      value: 45,
+      percent: 10,
+      color: "#94A3B8",
+    },
+  ];
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  // build conic-gradient string
+  let current = 0;
+  const gradient = data
+    .map((item) => {
+      const start = current;
+      const end = current + item.percent;
+      current = end;
+      return `${item.color} ${start}% ${end}%`;
+    })
+    .join(", ");
+
+  return (
+    <div className="bg-white rounded-sm shadow-sm p-8 flex flex-col">
+      <h4 className="text-lg font-black text-slate-900 tracking-tight mb-2">
+        Cơ cấu Trạng thái Đơn hàng
+      </h4>
+
+      <p className="text-sm text-slate-400 mb-10">
+        Phân bổ {total} đơn hàng hiện tại
+      </p>
+
+      {/* Donut */}
+      <div className="relative w-48 h-48 mx-auto mb-10 flex items-center justify-center">
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: `conic-gradient(${gradient})`,
+            maskImage:
+              "radial-gradient(circle, transparent 65%, black 65%)",
+            WebkitMaskImage:
+              "radial-gradient(circle, transparent 65%, black 65%)",
+          }}
+        />
+
+        <div className="text-center z-10">
+          <span className="block text-3xl font-black text-slate-900 tracking-tighter">
+            {total}
+          </span>
+          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Đơn hàng
+          </span>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="space-y-3">
+        {data.map((item, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-sm font-medium text-slate-600">
+                {item.label}
+              </span>
+            </div>
+
+            <span className="text-sm font-bold text-slate-900">
+              {item.value} ({item.percent}%)
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -11,22 +11,21 @@ const ProductionHeader = ({ onSearch }) => {
 
   return (
     <div className="mb-8 flex flex-col xl:flex-row xl:items-start justify-between gap-6">
-      
       {/* LEFT */}
       <div className="flex-1">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-[11px] font-bold tracking-tight text-slate-400 mb-2">
-          <span className="uppercase">PLT Management</span>
-
-          <span className="material-symbols-outlined text-[12px]">
+        <nav className="flex items-center text-xs text-slate-500 font-medium mb-2 gap-1">
+          <span className="hover:text-primary transition-colors cursor-pointer">
+            PLT Management
+          </span>
+          <span className="material-symbols-outlined text-sm">
             chevron_right
           </span>
-
-          <span className="text-primary uppercase">Sản xuất</span>
+          <span className="text-primary font-bold">Sản xuất</span>
         </nav>
 
         {/* Title */}
-        <h2 className="text-3xl md:text-[40px] font-black text-on-background leading-tight tracking-tight">
+        <h2 className="text-3xl md:text-[32px] font-black text-on-background leading-tight tracking-tight">
           Tiến độ Sản xuất
         </h2>
 
@@ -38,7 +37,6 @@ const ProductionHeader = ({ onSearch }) => {
 
       {/* RIGHT */}
       <div className="flex flex-wrap items-center gap-3 self-start xl:self-center">
-        
         {/* Search */}
         <div className="relative min-w-[240px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
@@ -55,9 +53,7 @@ const ProductionHeader = ({ onSearch }) => {
         </div>
         {/* Create button */}
         <button className="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100">
-          <span className="material-symbols-outlined text-lg">
-            add
-          </span>
+          <span className="material-symbols-outlined text-lg">add</span>
           <span className="text-sm">Tạo Lệnh Mới</span>
         </button>
       </div>

@@ -27,7 +27,7 @@ export default function MaterialsHistoryHeader() {
 
       {/* Title + Filter */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h3 className="text-4xl font-black text-on-surface tracking-tight">
+        <h3 className="text-3xl font-black text-on-surface tracking-tight">
           Lịch sử nhập vật liệu
         </h3>
 

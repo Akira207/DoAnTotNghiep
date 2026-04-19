@@ -11,6 +11,7 @@ export default {
         tertiary: "#2ECC71",
 
         // 🎯 Background & Surface System (NO-LINE design)
+        "on-primary-container": "rgb(0 33 78 / <alpha-value>)",
         background: "#F7F5FF",
         surface: "#F7F5FF",
 
@@ -27,6 +28,7 @@ export default {
         "on-primary": "#FFFFFF",
         "on-secondary": "#FFFFFF",
         "on-tertiary": "#FFFFFF",
+        
 
         // 🎯 State Colors
         success: "#2ECC71",
