@@ -20,6 +20,15 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  name: {
+    type: String,
+  },
+  address: {
+    type: String,
+  },
+  email: {
+    type: String,
+  },
 });
 
 export default mongoose.model("User", userSchema);

@@ -62,7 +62,7 @@ export const createFullOrder = async (req, res) => {
         amount: payment.amount,
         paymentDate: new Date(),
         paymentMethod: payment.method,
-        status: "paid"
+        status: "cash"
       });
       await paymentDoc.save();
     }

@@ -38,7 +38,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// GET ALL PRODUCTS (có filter nhẹ)
+// GET ALL PRODUCTS
 export const getAllProducts = async (req, res) => {
   try {
     const { category, minPrice, maxPrice } = req.query;
