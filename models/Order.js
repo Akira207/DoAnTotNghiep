@@ -2,17 +2,48 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    orderCode: {
+      type: String,
+      unique: true,
+    },
+
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
+      required: true,
     },
-    orderDate: Date,
-    totalAmount: Number,
+
+    orderDate: {
+      type: Date,
+      default: Date.now,
+    },
+
+    totalAmount: {
+      type: Number,
+      default: 0,
+    },
+
     status: {
       type: String,
-      default: "created",
+      enum: [
+        "pending", // chờ sản xuất
+        "producing", // đang sản xuất
+        "transporting", // đang vận chuyển
+        "waiting_payment", // chờ thanh toán
+        "completed", // hoàn thành
+        "cancelled", // huỷ
+      ],
+      default: "pending",
     },
-    note: String,
+
+    note: {
+      type: String,
+      default: "",
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true },
 );

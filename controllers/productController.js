@@ -11,16 +11,16 @@ export const createProduct = async (req, res) => {
       height,
       depth,
       price,
-      images,
       description,
     } = req.body;
-    if (!name || !price) {
-      return res.status(400).json({ message: "Name and price are required" });
-    }
-    if (price < 0) {
-      return res.status(400).json({ message: "Price must be >= 0" });
-    }
-    const product = new Product({
+
+    const imagePaths = req.files
+      ? req.files.map(
+          (file) => `http://localhost:5000/uploads/${file.filename}`,
+        )
+      : [];
+
+    const product = await Product.create({
       name,
       category,
       material,
@@ -28,13 +28,15 @@ export const createProduct = async (req, res) => {
       height,
       depth,
       price,
-      images,
+      images: imagePaths,
       description,
     });
-    const saved = await product.save();
-    res.status(201).json(saved);
+
+    res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
+    console.log("BODY:", req.body);
+console.log("FILES:", req.files);
   }
 };
 

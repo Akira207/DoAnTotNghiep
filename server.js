@@ -15,6 +15,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import materialImportRoutes from "./routes/materialImportRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import warehouseRoutes from "./routes/warehouseRoutes.js";
+import path from "path";
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/material-imports", materialImportRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/warehouse", warehouseRoutes);
+app.use("/uploads", express.static("uploads"));
  
 // start server
 const PORT = process.env.PORT || 5000;

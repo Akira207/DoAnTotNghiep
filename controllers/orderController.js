@@ -4,146 +4,271 @@ import ProductionTask from "../models/ProductionTask.js";
 import Payment from "../models/Payment.js";
 import Customer from "../models/Customer.js";
 
-// CREATE FULL ORDER
+import { generateOrderCode } from "../utils/generateOrderCode.js";
+
+/* =========================
+   CREATE FULL ORDER
+========================= */
 export const createFullOrder = async (req, res) => {
   try {
     const { customerId, products, payment, note } = req.body;
-    // validate
-    if (!customerId || !products || products.length === 0) {
-      return res.status(400).json({ message: "Missing required data" });
+
+    if (!customerId || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        message: "Missing required data",
+      });
     }
+
     const customer = await Customer.findById(customerId);
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({
+        message: "Customer not found",
+      });
     }
-    // tạo order
-    const order = new Order({
+
+    const orderCode = await generateOrderCode();
+
+    const order = await new Order({
+      orderCode,
       customerId,
       orderDate: new Date(),
-      status: "created",
-      note
-    });
-    const savedOrder = await order.save();
+      status: "pending",
+      note: note || "",
+      totalAmount: 0,
+    }).save();
+
     let totalAmount = 0;
-    const allowedSource = ["production", "warehouse"];
-    // tạo order details
-    for (let item of products) {
-      if (!allowedSource.includes(item.source)) {
-        return res.status(400).json({ message: "Invalid source" });
+
+    for (const item of products) {
+      if (!item.productId || item.quantity == null || item.price == null) {
+        await Order.findByIdAndDelete(order._id);
+
+        return res.status(400).json({
+          message: "Invalid product data",
+        });
       }
-      const detail = new OrderDetail({
-        orderId: savedOrder._id,
+
+      const detail = await new OrderDetail({
+        orderId: order._id,
         productId: item.productId,
         quantity: item.quantity,
-        price: item.price
-      });
-      const savedDetail = await detail.save();
+        price: item.price,
+      }).save();
+
       totalAmount += item.quantity * item.price;
-      // nếu sản xuất → tạo task
+
       if (item.source === "production") {
-        const task = new ProductionTask({
-          orderDetailId: savedDetail._id,
-          status: "pending"
-        });
-        await task.save();
+        await new ProductionTask({
+          type: "order",
+          orderId: order._id,
+          orderDetailId: detail._id,
+          productId: item.productId, // ✅ FIX QUAN TRỌNG
+          quantity: item.quantity, // ✅ FIX QUAN TRỌNG
+          batch: 1,
+          status: "pending",
+        }).save();
       }
-      // nếu warehouse → có thể trừ kho ở đây (nâng cấp sau)
     }
-    // cập nhật tổng tiền
-    savedOrder.totalAmount = totalAmount;
-    await savedOrder.save();
-    // payment
-    if (payment) {
-      if (payment.amount < totalAmount) {
-        return res.status(400).json({ message: "Payment not enough" });
-      }
-      const paymentDoc = new Payment({
-        orderId: savedOrder._id,
+
+    order.totalAmount = totalAmount;
+    await order.save();
+
+    let savedPayment = null;
+
+    if (payment?.amount > 0) {
+      savedPayment = await new Payment({
+        orderId: order._id,
         amount: payment.amount,
         paymentDate: new Date(),
-        paymentMethod: payment.method,
-        status: "cash"
-      });
-      await paymentDoc.save();
+        paymentMethod: payment.method || "cash",
+        status: "completed",
+      }).save();
     }
-    res.status(201).json({
+
+    return res.status(201).json({
       message: "Order created successfully",
-      orderId: savedOrder._id,
-      totalAmount
+      orderId: order._id,
+      orderCode,
+      totalAmount,
+      payment: savedPayment,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Error creating order",
-      error: error.message
+    console.error("CREATE ORDER ERROR:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
 
-// GET ALL ORDERS
+/* =========================
+   GET ALL ORDERS
+========================= */
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
-      .populate("customerId");
-    res.json(orders);
+      .populate("customerId")
+      .sort({ createdAt: -1 });
+
+    return res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
-// GET ORDER BY ID + DETAILS
+/* =========================
+   GET ORDER BY ID
+========================= */
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate("customerId");
+    const order = await Order.findById(req.params.id).populate("customerId");
+
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({
+        message: "Order not found",
+      });
     }
-    const details = await OrderDetail.find({ orderId: order._id })
-      .populate("productId");
-    res.json({
+
+    const details = await OrderDetail.find({
+      orderId: order._id,
+    }).populate("productId");
+
+    const payment = await Payment.findOne({
+      orderId: order._id,
+    });
+
+    return res.json({
       order,
-      details
+      details,
+      payment,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
-
-// UPDATE ORDER
+/* =========================
+   UPDATE ORDER STATUS (FIXED)
+========================= */
 export const updateOrder = async (req, res) => {
   try {
-    const updated = await Order.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    if (!updated) {
-      return res.status(404).json({ message: "Order not found" });
+    const { status, note } = req.body;
+
+    // ✅ danh sách trạng thái hợp lệ
+    const validStatus = [
+      "pending",
+      "producing",
+      "transporting",
+      "waiting_payment",
+      "completed",
+      "cancelled",
+    ];
+
+    if (!status || !validStatus.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status",
+      });
     }
-    res.json(updated);
+
+    // tìm order
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    // ✅ flow chuẩn
+    const flow = [
+      "pending",
+      "producing",
+      "transporting",
+      "waiting_payment",
+      "completed",
+    ];
+
+    const currentIndex = flow.indexOf(order.status);
+    const newIndex = flow.indexOf(status);
+
+    // ❌ không cho quay ngược (trừ cancel)
+    if (status !== "cancelled" && newIndex < currentIndex) {
+      return res.status(400).json({
+        message: "Không thể quay lại trạng thái trước",
+      });
+    }
+
+    // ❌ không cho completed nếu chưa thanh toán
+    if (status === "completed") {
+      const payment = await Payment.findOne({ orderId: order._id });
+
+      if (!payment) {
+        return res.status(400).json({
+          message: "Chưa thanh toán, không thể hoàn thành",
+        });
+      }
+    }
+
+    // update
+    order.status = status;
+
+    if (note) {
+      order.note = note;
+    }
+
+    await order.save();
+
+    return res.json({
+      message: "Cập nhật trạng thái thành công",
+      order,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("UPDATE ORDER ERROR:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
-
-// DELETE ORDER (xóa cả detail + task + payment)
+/* =========================
+   DELETE ORDER
+========================= */
 export const deleteOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
+
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({
+        message: "Order not found",
+      });
     }
-    const details = await OrderDetail.find({ orderId: order._id });
-    for (let d of details) {
-      await ProductionTask.deleteMany({ orderDetailId: d._id });
+
+    const details = await OrderDetail.find({
+      orderId: order._id,
+    });
+
+    for (const d of details) {
+      await ProductionTask.deleteMany({
+        orderDetailId: d._id,
+      });
     }
+
     await OrderDetail.deleteMany({ orderId: order._id });
     await Payment.deleteMany({ orderId: order._id });
     await Order.findByIdAndDelete(order._id);
-    res.json({ message: "Order deleted successfully" });
+
+    return res.json({
+      message: "Order deleted successfully",
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };

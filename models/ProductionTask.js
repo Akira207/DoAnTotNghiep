@@ -1,23 +1,50 @@
 import mongoose from "mongoose";
 
-const productionTaskSchema = new mongoose.Schema(
+const ProductionTaskSchema = new mongoose.Schema(
   {
+    type: {
+      type: String,
+      enum: ["order", "stock"],
+      default: "stock",
+    },
+
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      default: null,
+    },
+
     orderDetailId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderDetail",
+      default: null,
+    },
+
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
       required: true,
     },
 
-    workerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    quantity: {
+      type: Number,
+      required: true,
     },
 
-    // 🔥 thêm batch
-    batchId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ProductionBatch",
-      required: true,
+    batch: {
+      type: Number,
+      default: 1,
+    },
+
+    material: {
+      type: String,
+      default: "",
+    },
+
+    specs: {
+      height: String,
+      width: String,
+      depth: String,
     },
 
     status: {
@@ -26,22 +53,20 @@ const productionTaskSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    // 🔥 thêm tiến độ (rất hữu ích cho production)
-    progress: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
+    workerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
-
-    startDate: Date,
-    endDate: Date, // 👈 thêm để track hoàn thành
 
     note: String,
 
-    images: [String],
+    progress: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("ProductionTask", productionTaskSchema);
+export default mongoose.model("ProductionTask", ProductionTaskSchema);
