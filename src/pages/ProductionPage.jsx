@@ -1,63 +1,135 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
+
 import ProductionHeader from "../features/production/ProductionHeader";
 import ProductionFilters from "../features/production/ProductionFilters";
 import ProductionSummary from "../features/production/ProductionSummary";
 import ProductionGrid from "../features/production/ProductionGrid";
 import Pagination from "../features/production/Pagination";
 
+import ProductionDetailModal from "../features/production/ProductionDetailModal";
+import ProductionCreateModal from "../features/production/ProductionCreateModal";
+
+import { getProductionTasks } from "../services/productionService";
+
 export default function ProductionPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // khóa scroll khi mở sidebar mobile
-  useEffect(() => {
-    document.body.style.overflow = isSidebarOpen ? "hidden" : "";
-  }, [isSidebarOpen]);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [status, setStatus] = useState("Tất cả");
+  const [page, setPage] = useState(1);
+
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  const limit = 8;
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  const [page, setPage] = useState(1);
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+
+      const statusQuery =
+        status === "Tất cả"
+          ? ""
+          : status === "Đang sản xuất"
+          ? "in-progress"
+          : status === "Hoàn thành"
+          ? "completed"
+          : "pending";
+
+      const data = await getProductionTasks(statusQuery);
+
+      setTasks(data.data || data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [status]);
+
+  // ======================
+  // DETAIL
+  // ======================
+  const handleOpenDetail = (item) => {
+    setSelectedTask(item);
+    setIsDetailOpen(true);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedTask(null);
+    setIsDetailOpen(false);
+  };
+
+  // ======================
+  // CREATE
+  // ======================
+  const handleCreateSuccess = () => {
+    setIsCreateOpen(false);
+    fetchTasks(); // reload list
+  };
+
+  const start = (page - 1) * limit;
+  const paginatedTasks = tasks.slice(start, start + limit);
+
+  if (loading) {
+    return <div className="p-10 text-center">Loading...</div>;
+  }
 
   return (
-    <div className="bg-background text-on-background font-body min-h-dvh overflow-x-hidden">
-      {/* Overlay (mobile) */}
-      <div
-        onClick={toggleSidebar}
-        className={`
-          fixed inset-0 bg-black/50 z-[50] md:hidden transition-all duration-300
-          ${
-            isSidebarOpen
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }
-        `}
-      />
+    <div className="min-h-screen bg-background">
 
-      {/* Sidebar */}
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-
-      {/* Mobile Header */}
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
-      {/* Main Content */}
-      <main className="lg:ml-[280px] min-h-screen p-4 md:p-8 lg:p-10">
-        {/* prodcution header */}
-        <ProductionHeader />
+      <main className="lg:ml-[280px] p-6">
 
-        {/* filters */}
-        <ProductionFilters />
+        <ProductionHeader onCreate={() => setIsCreateOpen(true)} />
 
-        {/* summary */}
-        <ProductionSummary />
+        <ProductionFilters onStatusChange={setStatus} />
 
-        {/* production grid */}
-        <ProductionGrid />
+        <ProductionSummary data={{ total: tasks.length }} />
 
-        {/* pagination */}
-        <Pagination page={page} total={84} limit={4} onPageChange={setPage} />
+        <ProductionGrid
+          tasks={paginatedTasks}
+          onDetail={handleOpenDetail}
+        />
+
+        <Pagination
+          page={page}
+          total={tasks.length}
+          limit={limit}
+          onPageChange={setPage}
+        />
+
       </main>
+
+      {/* DETAIL */}
+      <ProductionDetailModal
+        isOpen={isDetailOpen}
+        item={selectedTask}
+        onClose={handleCloseDetail}
+        onUpdated={fetchTasks}
+      />
+
+      {/* CREATE */}
+      <ProductionCreateModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreated={handleCreateSuccess}
+      />
+
     </div>
   );
 }

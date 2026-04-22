@@ -1,31 +1,26 @@
-import { useState } from "react";
-
 export default function ProductsPagination({
-  total = 1284,
-  perPage = 6,
+  total = 0,
+  perPage = 8,
+  currentPage = 1,
+  onPageChange,
 }) {
-  const [currentPage, setCurrentPage] = useState(1);
-
   const totalPages = Math.ceil(total / perPage);
 
   const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage((p) => p - 1);
+    if (currentPage > 1) onPageChange(currentPage - 1);
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage((p) => p + 1);
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
   };
 
-  const start = (currentPage - 1) * perPage + 1;
+  const start = total === 0 ? 0 : (currentPage - 1) * perPage + 1;
   const end = Math.min(currentPage * perPage, total);
 
-  // tạo list page (basic)
-  const pages = [1, 2, 3, "...", totalPages];
-
   return (
-    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-slate-100 pt-8">
+    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-slate-100">
       
-      {/* info */}
+      {/* Info */}
       <div className="text-sm text-on-surface-variant">
         Hiển thị{" "}
         <span className="font-bold text-on-surface">
@@ -35,47 +30,30 @@ export default function ProductsPagination({
         <span className="font-bold text-on-surface">{total}</span> sản phẩm
       </div>
 
-      {/* controls */}
-      <div className="flex items-center gap-1">
+      {/* Controls */}
+      <div className="flex items-center gap-2">
         
-        {/* prev */}
+        {/* Prev */}
         <button
           onClick={handlePrev}
-          className="p-2 text-outline hover:text-primary hover:bg-blue-50 transition-colors rounded-sm disabled:opacity-40"
           disabled={currentPage === 1}
+          className="p-2 rounded hover:bg-slate-100 disabled:opacity-40"
         >
           <span className="material-symbols-outlined">
             chevron_left
           </span>
         </button>
 
-        {/* pages */}
-        {pages.map((p, i) =>
-          p === "..." ? (
-            <span key={i} className="px-2 text-outline">
-              ...
-            </span>
-          ) : (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(p)}
-              className={`w-10 h-10 flex items-center justify-center rounded-sm text-sm font-medium
-                ${
-                  currentPage === p
-                    ? "bg-primary text-white font-bold"
-                    : "hover:bg-slate-100"
-                }`}
-            >
-              {p}
-            </button>
-          )
-        )}
+        {/* Page info */}
+        <div className="px-4 py-2 text-sm font-bold">
+          {currentPage} / {totalPages || 1}
+        </div>
 
-        {/* next */}
+        {/* Next */}
         <button
           onClick={handleNext}
-          className="p-2 text-outline hover:text-primary hover:bg-blue-50 transition-colors rounded-sm disabled:opacity-40"
-          disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages || totalPages === 0}
+          className="p-2 rounded hover:bg-slate-100 disabled:opacity-40"
         >
           <span className="material-symbols-outlined">
             chevron_right

@@ -8,14 +8,36 @@ import CustomerTable from "../features/custumer/CustomerTable";
 import CustomerActivity from "../features/custumer/CustomerActivity";
 import CustomerAnalysis from "../features/custumer/CustomerAnalysis";
 
+import { getCustomers } from "../services/customerService";
+
 export default function CustomerPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  // fetch data
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await getCustomers();
+      setCustomers(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
   return (
     <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
       {/* Overlay */}
@@ -32,18 +54,17 @@ export default function CustomerPage() {
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
-      {/* Main content */}
       <main className="p-4 md:p-8 lg:ml-[280px] space-y-6">
-        {/* Header */}
         <CustomerHeader />
 
-        {/* Stats */}
         <CustomerStats />
 
-        {/* Table */}
-        <CustomerTable />
+        <CustomerTable
+          customers={customers}
+          loading={loading}
+          onRefresh={fetchCustomers}
+        />
 
-        {/* Activity & Analysis */}
         <div className="grid lg:grid-cols-12 gap-6">
           <CustomerActivity />
           <CustomerAnalysis />

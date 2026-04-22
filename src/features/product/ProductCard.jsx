@@ -1,28 +1,24 @@
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, onEdit, onView }) {
+  const image = product.images?.[0] || "/no-image.png";
+
   return (
-    <div className="bg-surface-container-lowest rounded-sm shadow-sm overflow-hidden group border border-transparent hover:border-primary/20 transition-all duration-300">
+    <div
+      onClick={() => onView?.(product)}
+      className="bg-surface-container-lowest rounded-sm shadow-sm overflow-hidden group border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer"
+    >
       {/* Image */}
       <div className="aspect-[4/3] overflow-hidden relative">
         <img
-          src={product.image}
+          src={image}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-
-        {/* Status */}
-        {/* <div className="absolute top-3 right-3">
-          <span
-            className={`px-3 py-1 text-[10px] font-bold uppercase rounded-full ${product.statusClass}`}
-          >
-            {product.status}
-          </span>
-        </div> */}
       </div>
 
       {/* Content */}
       <div className="p-5 flex flex-col">
         <div className="text-[10px] font-bold text-primary mb-1">
-          SKU: {product.sku}
+          ID: {product._id}
         </div>
 
         <h3 className="text-lg font-bold text-on-surface mb-3 line-clamp-1">
@@ -47,19 +43,27 @@ export default function ProductCard({ product }) {
           </div>
         </div>
 
-        {/* Price */}
-        <div className="flex items-center justify-between mt-auto">
+        {/* Price + Edit */}
+        <div
+          className="flex items-center justify-between mt-auto"
+          onClick={(e) => e.stopPropagation()} // ❗ tránh click edit bị mở modal
+        >
           <div>
             <div className="text-[10px] uppercase text-outline font-bold mb-1">
-              Ước tính
+              Giá
             </div>
             <div className="text-xl font-black text-secondary">
               {product.price} VND
             </div>
           </div>
 
-          <button className="p-2 hover:bg-slate-50 rounded-sm text-outline hover:text-primary transition-colors">
-            <span className="material-symbols-outlined">edit_square</span>
+          <button
+            onClick={() => onEdit?.(product)}
+            className="p-2 hover:bg-slate-50 rounded-sm text-outline hover:text-primary"
+          >
+            <span className="material-symbols-outlined">
+              edit_square
+            </span>
           </button>
         </div>
       </div>

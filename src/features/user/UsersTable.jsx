@@ -30,7 +30,7 @@ export default function UsersTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm kiếm..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-container-high rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm"
           />
         </div>
 

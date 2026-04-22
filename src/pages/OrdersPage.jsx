@@ -1,62 +1,143 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
+
 import OrdersHeader from "../features/orders/OrdersHeader";
-import OrdersFilters from "../features/orders/OrderFilters";
+import OrdersFilters from "../features/orders/OrdersFilters";
 import OrderTable from "../features/orders/OrderTable";
 import OrderPagination from "../features/orders/OrderPagination";
+import AddOrderForm from "../features/orders/AddOrderForm";
+
+const API = "http://localhost:5000/api";
 
 export default function OrdersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // pagination state
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("Tất cả");
+
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  // 🔥 modal create
+  const [openCreate, setOpenCreate] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen((p) => !p);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  // =========================
+  // FETCH
+  // =========================
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API}/orders`);
+      setOrders(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // fake total (sau này replace API)
-  const totalItems = 42;
-  const totalPages = Math.ceil(totalItems / limit);
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  // =========================
+  // FILTER + SEARCH + PAGINATION
+  // =========================
+  const filteredOrders = orders.filter((o) => {
+    const keyword = search.toLowerCase();
+
+    const matchSearch =
+      o.orderCode?.toLowerCase().includes(keyword) ||
+      o.customerId?.name?.toLowerCase().includes(keyword);
+
+    const map = {
+      "Tất cả": null,
+      "Chờ sản xuất": "pending",
+      "Đang sản xuất": "producing",
+      "Đang vận chuyển": "transporting",
+      "Chờ thanh toán": "waiting_payment",
+      "Đã thanh toán": "completed",
+      "Đã huỷ": "cancelled",
+    };
+
+    const statusNeed = map[filter];
+    const matchFilter = statusNeed ? o.status === statusNeed : true;
+
+    return matchSearch && matchFilter;
+  });
+
+  const totalPages = Math.ceil(filteredOrders.length / limit);
+
+  const paginatedOrders = filteredOrders.slice(
+    (page - 1) * limit,
+    page * limit
+  );
+
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-slate-500">
+        Đang tải dữ liệu...
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
-      {/* Overlay */}
-      <div
-        onClick={toggleSidebar}
-        className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition-all duration-300
-        ${
-          isSidebarOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-      />
-
+    <div className="bg-background text-on-background min-h-screen">
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
-      <main className="min-h-screen p-4 md:p-8 lg:ml-[280px] lg:p-12">
-        <OrdersHeader />
+      <main className="md:ml-[280px] p-6 lg:p-10">
 
-        <OrdersFilters />
+        {/* HEADER */}
+        <OrdersHeader onCreate={() => setOpenCreate(true)} />
 
-        {/* TABLE nhận page */}
-        <OrderTable page={page} limit={limit} />
+        {/* FILTER */}
+        <OrdersFilters
+          search={search}
+          onSearch={setSearch}
+          filter={filter}
+          onFilterChange={setFilter}
+        />
 
-        {/* PAGINATION điều khiển page */}
+        {/* TABLE */}
+        <OrderTable
+          orders={paginatedOrders}
+          onReload={fetchOrders}
+        />
+
+        {/* PAGINATION */}
         <OrderPagination
           page={page}
           totalPages={totalPages}
-          totalItems={totalItems}
+          totalItems={filteredOrders.length}
           limit={limit}
           onPageChange={setPage}
         />
+
       </main>
+
+      {/* MODAL CREATE */}
+      {openCreate && (
+        <AddOrderForm
+          onClose={() => setOpenCreate(false)}
+          onSuccess={() => {
+            fetchOrders();
+            setOpenCreate(false);
+          }}
+        />
+      )}
     </div>
   );
-} 
+}

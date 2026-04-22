@@ -10,6 +10,7 @@ import UsersPage from "../pages/UsersPage";
 import ReportsPage from "../pages/ReportsPage";
 import ProductsPage from "../pages/ProductsPage";
 import AccessoriesPage from "../pages/AccessoriesPage";
+import OrderDetailPage from "../pages/OrderDetailPage";
 
 export const publicRoutes = [
   { path: "/login", element: <LoginPage /> },
@@ -19,6 +20,9 @@ export const protectedRoutes = [
   { path: "/dashboard", element: <DashboardPage />, roles: ["admin", "accountant"] },
   { path: "/orders", element: <OrdersPage />, roles: ["admin", "accountant"] },
   { path: "/production", element: <ProductionPage />, roles: ["admin", "worker", "accountant"] },
+  { path: "/orders/:id", element: <OrderDetailPage />, roles: ["admin", "staff"],},
+  // { path: "/orders/order-detail", element: <OrderDetailPage />, roles: ["admin", "staff"],}, //test
+
 
   { path: "/warehouse/products", element: <ProductWarehousePage />, roles: ["admin", "accountant"] },
   { path: "/warehouse/materials-history", element: <MaterialsHistoryPage />, roles: ["admin", "accountant"] },

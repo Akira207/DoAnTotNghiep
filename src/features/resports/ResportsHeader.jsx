@@ -1,58 +1,70 @@
-import { useState } from "react";
-
-const ResportsHeader = () => {
-  const [range, setRange] = useState("month");
-
-  const options = [
-    { key: "month", label: "Tháng này" },
-    { key: "quarter", label: "Quý này" },
-    { key: "year", label: "Cả năm" },
-  ];
-
+export default function OrderDetailHeader({ order }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-      {/* Left */}
+    <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+
+      {/* LEFT */}
       <div>
+
         {/* Breadcrumb */}
         <nav className="flex items-center text-xs text-slate-500 font-medium mb-2 gap-1">
           <span className="hover:text-primary transition-colors cursor-pointer">
             PLT Management
           </span>
+
           <span className="material-symbols-outlined text-sm">
             chevron_right
           </span>
-          <span className="text-primary font-bold">Báo Cáo & Thống Kê</span>
+
+          <span className="hover:text-primary transition-colors cursor-pointer">
+            Đơn hàng
+          </span>
+
+          <span className="material-symbols-outlined text-sm">
+            chevron_right
+          </span>
+
+          <span className="text-primary font-bold">
+            Chi tiết đơn hàng #{order?.id || "PLT-2401"}
+          </span>
         </nav>
 
         {/* Title */}
-        <h2 className="text-3xl font-black text-on-surface tracking-tight">
-          Báo Cáo & Thống Kê
+        <h2 className="text-3xl font-black tracking-tighter text-primary mb-2">
+          Đơn hàng #{order?.id || "PLT-2401"}
         </h2>
+
+        {/* Status */}
+        <div className="flex items-center gap-4 text-sm font-medium">
+
+          <div className="flex items-center gap-2 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-lg">
+            <span className="w-2 h-2 rounded-full bg-secondary"></span>
+            Đã đặt cọc
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1 bg-error-container/10 text-error rounded-lg">
+            <span className="w-2 h-2 rounded-full bg-error"></span>
+            Chưa hoàn thành
+          </div>
+
+        </div>
       </div>
 
-      {/* Right - Filter */}
-      <div className="flex items-center gap-2 bg-surface-container p-1 rounded-lg">
-        {options.map((item) => {
-          const isActive = range === item.key;
+      {/* RIGHT ACTIONS */}
+      <div className="flex gap-2">
 
-          return (
-            <button
-              key={item.key}
-              onClick={() => setRange(item.key)}
-              className={`px-4 py-1.5 text-xs font-bold rounded transition
-                ${
-                  isActive
-                    ? "bg-white text-primary shadow-sm"
-                    : "text-on-surface-variant hover:text-on-surface"
-                }`}
-            >
-              {item.label}
-            </button>
-          );
-        })}
+        <button className="flex items-center gap-2 px-4 py-2 bg-surface-container-highest text-on-surface font-bold rounded hover:bg-surface-variant transition-colors">
+          <span className="material-symbols-outlined text-lg">
+            print
+          </span>
+          In đơn hàng
+        </button>
+
+        <button className="flex items-center gap-2 px-6 py-2 bg-primary text-white font-bold rounded shadow-lg shadow-primary/20 active:opacity-80 transition-opacity">
+          Cập nhật trạng thái
+        </button>
+
       </div>
+
     </div>
   );
-};
-
-export default ResportsHeader;
+}

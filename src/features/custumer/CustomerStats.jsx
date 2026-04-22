@@ -21,7 +21,7 @@ export default function CustomerStats() {
       value: "42",
       sub: "Tháng này",
       subClass: "text-tertiary text-xs font-bold",
-      border: "border-primary-container",
+      border: "border-tertiary",
     },
     {
       title: "Công nợ khách hàng",
