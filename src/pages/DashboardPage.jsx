@@ -8,14 +8,58 @@ import ChartSection from "../features/dashBoard/ChartSection";
 import StatusCard from "../features/dashBoard/StatusCard";
 import NewOrdersTable from "../features/dashBoard/NewOrdersTable";
 
+import { getOrders } from "../services/orderService";
+import { getAllProducts } from "../services/productService";
+import { getCustomers } from "../services/customerService";
+import { getUsers } from "../services/userService";
+
 export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    orders: [],
+    products: [],
+    customers: [],
+    users: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch all data in parallel
+      const [ordersData, productsData, customersData, usersData] = await Promise.all([
+        getOrders().catch(() => []),
+        getAllProducts().catch(() => []),
+        getCustomers().catch(() => []),
+        getUsers().catch(() => []),
+      ]);
+
+      setDashboardData({
+        orders: Array.isArray(ordersData) ? ordersData : [],
+        products: Array.isArray(productsData) ? productsData : [],
+        customers: Array.isArray(customersData) ? customersData : [],
+        users: Array.isArray(usersData) ? usersData : [],
+      });
+    } catch (err) {
+      console.error("Fetch dashboard error:", err);
+      setError(err.message || "Failed to fetch dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
@@ -35,17 +79,33 @@ export default function DashboardPage() {
       {/* Main */}
       <main className="md:ml-[280px] p-6 lg:p-10 space-y-10">
         <DashboardHeader />
-        <KPISection />
-
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <ChartSection />
-          <StatusCard />
-        </section>
-
-          <section className="bg-white rounded shadow-sm overflow-hidden">
-            <NewOrdersTable />
-          </section>
         
+        {error && (
+          <div className="p-4 bg-red-100 text-red-800 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="text-center text-slate-500">
+            Đang tải dữ liệu...
+          </div>
+        )}
+
+        {!loading && (
+          <>
+            <KPISection data={dashboardData} />
+
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <ChartSection data={dashboardData} />
+              <StatusCard data={dashboardData} />
+            </section>
+
+            <section className="bg-white rounded shadow-sm overflow-hidden">
+              <NewOrdersTable orders={dashboardData.orders} />
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

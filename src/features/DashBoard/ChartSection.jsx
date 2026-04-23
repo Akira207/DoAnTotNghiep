@@ -1,13 +1,49 @@
-const chartData = [
-  { month: "Tháng 1", revenue: 40, production: 30, opacity: "20" },
-  { month: "Tháng 2", revenue: 60, production: 45, opacity: "40" },
-  { month: "Tháng 3", revenue: 55, production: 70, opacity: "60" },
-  { month: "Tháng 4", revenue: 80, production: 60, opacity: "80" },
-  { month: "Tháng 5", revenue: 95, production: 75, opacity: "100" },
-  { month: "Tháng 6", revenue: 85, production: 90, opacity: "90" },
-];
+const generateChartData = (orders = []) => {
+  // Group orders by month
+  const monthlyData = {};
+  const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6"];
 
-const ChartSection = () => {
+  // Initialize months
+  months.forEach(month => {
+    monthlyData[month] = { revenue: 0, production: 0 };
+  });
+
+  // Process orders (assuming they have createdAt and totalAmount)
+  orders.forEach(order => {
+    const date = new Date(order.createdAt || new Date());
+    const month = `Tháng ${date.getMonth() + 1}`;
+    
+    if (monthlyData[month]) {
+      monthlyData[month].revenue += order.totalAmount || 0;
+      monthlyData[month].production += order.quantity || 1;
+    }
+  });
+
+  // Convert to array and normalize values
+  let chartData = months.map(month => ({
+    month,
+    revenue: monthlyData[month].revenue / 10000000, // Convert to 10M units
+    production: monthlyData[month].production,
+  }));
+
+  // Find max values for scaling
+  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1);
+  const maxProduction = Math.max(...chartData.map(d => d.production), 1);
+
+  // Scale to percentage (0-100)
+  chartData = chartData.map(item => ({
+    ...item,
+    revenue: (item.revenue / maxRevenue) * 100,
+    production: (item.production / maxProduction) * 100,
+  }));
+
+  return chartData;
+};
+
+const ChartSection = ({ data = {} }) => {
+  const { orders = [] } = data;
+  const chartData = generateChartData(orders);
+
   return (
     <div className="lg:col-span-2 bg-white p-8 rounded shadow-sm">
       {/* Header */}
@@ -42,21 +78,13 @@ const ChartSection = () => {
           >
             <div className="w-full flex items-end justify-center gap-1 h-full">
               <div
-                className={`w-1/2 rounded-t ${
-                  item.opacity === "100"
-                    ? "bg-primary"
-                    : `bg-primary/${item.opacity}`
-                }`}
-                style={{ height: `${item.revenue}%` }}
+                className="w-1/2 rounded-t bg-primary opacity-70 hover:opacity-100 transition-opacity"
+                style={{ height: `${Math.max(item.revenue, 5)}%` }}
               ></div>
 
               <div
-                className={`w-1/2 rounded-t ${
-                  item.opacity === "100"
-                    ? "bg-secondary"
-                    : `bg-secondary/${item.opacity}`
-                }`}
-                style={{ height: `${item.production}%` }}
+                className="w-1/2 rounded-t bg-secondary opacity-70 hover:opacity-100 transition-opacity"
+                style={{ height: `${Math.max(item.production, 5)}%` }}
               ></div>
             </div>
 

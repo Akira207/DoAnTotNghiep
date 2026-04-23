@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
@@ -10,13 +9,14 @@ import OrderTable from "../features/orders/OrderTable";
 import OrderPagination from "../features/orders/OrderPagination";
 import AddOrderForm from "../features/orders/AddOrderForm";
 
-const API = "http://localhost:5000/api";
+import { getOrders } from "../services/orderService";
 
 export default function OrdersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Tất cả");
@@ -34,15 +34,20 @@ export default function OrdersPage() {
   }, [isSidebarOpen]);
 
   // =========================
-  // FETCH
+  // FETCH ORDERS
   // =========================
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/orders`);
-      setOrders(res.data);
+      setError(null);
+      const data = await getOrders();
+      // Handle both array and object with orders property
+      const ordersList = Array.isArray(data) ? data : (data.orders || []);
+      setOrders(ordersList);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch orders error:", err);
+      setError(err.message || "Failed to fetch orders");
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -89,6 +94,14 @@ export default function OrdersPage() {
     return (
       <div className="p-10 text-center text-slate-500">
         Đang tải dữ liệu...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-10 text-center text-red-500">
+        {error}
       </div>
     );
   }

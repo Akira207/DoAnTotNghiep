@@ -1,36 +1,55 @@
-export default function OrderStatusChart() {
-  const data = [
+export default function OrderStatusChart({ data = {} }) {
+  const { orders = [] } = data;
+
+  // Calculate status distribution from actual orders
+  const statusCounts = {
+    "in-progress": 0,
+    "pending": 0,
+    "completed": 0,
+    "paused": 0,
+  };
+
+  orders.forEach(order => {
+    const status = order.status || "pending";
+    if (statusCounts[status] !== undefined) {
+      statusCounts[status]++;
+    } else {
+      statusCounts["pending"]++;
+    }
+  });
+
+  const total = Object.values(statusCounts).reduce((a, b) => a + b, 0) || 1;
+
+  const data_chart = [
     {
       label: "Đang sản xuất",
-      value: 225,
-      percent: 50,
+      value: statusCounts["in-progress"],
+      percent: Math.round((statusCounts["in-progress"] / total) * 100),
       color: "#0058BA",
     },
     {
       label: "Chờ xử lý",
-      value: 113,
-      percent: 25,
+      value: statusCounts["pending"],
+      percent: Math.round((statusCounts["pending"] / total) * 100),
       color: "#FF8C00",
     },
     {
       label: "Hoàn thành",
-      value: 67,
-      percent: 15,
+      value: statusCounts["completed"],
+      percent: Math.round((statusCounts["completed"] / total) * 100),
       color: "#006A35",
     },
     {
       label: "Huỷ",
-      value: 45,
-      percent: 10,
+      value: statusCounts["paused"],
+      percent: Math.round((statusCounts["paused"] / total) * 100),
       color: "#94A3B8",
     },
   ];
 
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-
   // build conic-gradient string
   let current = 0;
-  const gradient = data
+  const gradient = data_chart
     .map((item) => {
       const start = current;
       const end = current + item.percent;
@@ -74,7 +93,7 @@ export default function OrderStatusChart() {
 
       {/* Legend */}
       <div className="space-y-3">
-        {data.map((item, index) => (
+        {data_chart.map((item, index) => (
           <div
             key={index}
             className="flex items-center justify-between"

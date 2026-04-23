@@ -99,7 +99,7 @@ export default function ProductionPage() {
 
         <ProductionFilters onStatusChange={setStatus} />
 
-        <ProductionSummary data={{ total: tasks.length }} />
+        <ProductionSummary tasks={tasks} />
 
         <ProductionGrid
           tasks={paginatedTasks}

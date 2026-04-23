@@ -1,12 +1,46 @@
-export default function RevenueChart() {
+const generateMonthlyFinanceData = (orders = []) => {
   const months = [
-    { label: "Tháng 1", income: 40, expense: 25 },
-    { label: "Tháng 2", income: 60, expense: 30 },
-    { label: "Tháng 3", income: 55, expense: 45 },
-    { label: "Tháng 4", income: 75, expense: 20 },
-    { label: "Tháng 5", income: 90, expense: 35 },
-    { label: "Tháng 6", income: 85, expense: 50 },
+    { label: "Tháng 1", income: 0, expense: 0 },
+    { label: "Tháng 2", income: 0, expense: 0 },
+    { label: "Tháng 3", income: 0, expense: 0 },
+    { label: "Tháng 4", income: 0, expense: 0 },
+    { label: "Tháng 5", income: 0, expense: 0 },
+    { label: "Tháng 6", income: 0, expense: 0 },
   ];
+
+  // Populate data from orders
+  orders.forEach(order => {
+    const date = new Date(order.createdAt || new Date());
+    const monthIndex = date.getMonth();
+    
+    if (monthIndex < 6) {
+      months[monthIndex].income += order.totalAmount || 0;
+      months[monthIndex].expense += (order.totalAmount * 0.6) || 0; // Estimate 60% cost
+    }
+  });
+
+  // Normalize to percentage
+  const maxValue = Math.max(
+    ...months.map(m => Math.max(m.income, m.expense)),
+    1
+  );
+
+  return months.map(m => ({
+    ...m,
+    income: (m.income / maxValue) * 100,
+    expense: (m.expense / maxValue) * 100,
+  }));
+};
+
+export default function RevenueChart({ data = {} }) {
+  const { orders = [] } = data;
+  const months = generateMonthlyFinanceData(orders);
+
+  // Calculate cost breakdown
+  const totalExpense = months.reduce((sum, m) => sum + m.expense, 0);
+  const materialCost = (totalExpense * 0.45) / (totalExpense || 1) * 100;
+  const laborCost = (totalExpense * 0.30) / (totalExpense || 1) * 100;
+  const overheadCost = (totalExpense * 0.25) / (totalExpense || 1) * 100;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -46,14 +80,14 @@ export default function RevenueChart() {
               <div className="w-full flex items-end justify-center gap-1 h-full">
                 {/* income */}
                 <div
-                  className="w-4 bg-primary rounded-t"
-                  style={{ height: `${m.income}%` }}
+                  className="w-4 bg-primary rounded-t hover:opacity-80 transition-opacity"
+                  style={{ height: `${Math.max(m.income, 5)}%` }}
                 />
 
                 {/* expense */}
                 <div
-                  className="w-4 bg-secondary rounded-t"
-                  style={{ height: `${m.expense}%` }}
+                  className="w-4 bg-secondary rounded-t hover:opacity-80 transition-opacity"
+                  style={{ height: `${Math.max(m.expense, 5)}%` }}
                 />
               </div>
 
@@ -76,22 +110,22 @@ export default function RevenueChart() {
           <div>
             <div className="flex justify-between text-xs mb-1">
               <span className="text-on-surface-variant">Nguyên vật liệu</span>
-              <span className="font-bold">45%</span>
+              <span className="font-bold">{materialCost.toFixed(0)}%</span>
             </div>
 
             <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-              <div className="h-full bg-primary w-[45%]"></div>
+              <div className="h-full bg-primary" style={{ width: `${materialCost}%` }}></div>
             </div>
           </div>
 
           <div>
             <div className="flex justify-between text-xs mb-1">
               <span className="text-on-surface-variant">Nhân công</span>
-              <span className="font-bold">30%</span>
+              <span className="font-bold">{laborCost.toFixed(0)}%</span>
             </div>
 
             <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-              <div className="h-full bg-primary-container w-[30%]"></div>
+              <div className="h-full bg-primary-container" style={{ width: `${laborCost}%` }}></div>
             </div>
           </div>
 
@@ -100,11 +134,11 @@ export default function RevenueChart() {
               <span className="text-on-surface-variant">
                 Vận hành & Máy móc
               </span>
-              <span className="font-bold">15%</span>
+              <span className="font-bold">{overheadCost.toFixed(0)}%</span>
             </div>
 
             <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-              <div className="h-full bg-secondary w-[15%]"></div>
+              <div className="h-full bg-secondary" style={{ width: `${overheadCost}%` }}></div>
             </div>
           </div>
         </div>

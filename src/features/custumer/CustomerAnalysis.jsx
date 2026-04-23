@@ -1,23 +1,37 @@
-export default function CustomerAnalysis() {
+export default function CustomerAnalysis({ customers = [] }) {
+  // Calculate customer segments
+  const totalCustomers = customers.length || 1;
+  const projectAgencies = customers.filter(c => (c.type || "").toLowerCase().includes("dự án")).length;
+  const premiumCustomers = customers.filter(c => (c.type || "").toLowerCase().includes("cao cấp")).length;
+  const retailAgencies = customers.filter(c => (c.type || "").toLowerCase().includes("bán lẻ")).length;
+  
+  const other = totalCustomers - projectAgencies - premiumCustomers - retailAgencies;
+
   const segments = [
     {
-      label: "Đại lý dự án (45%)",
-      value: "562 khách",
-      percent: "45%",
+      label: `Đại lý dự án (${Math.round((projectAgencies / totalCustomers) * 100)}%)`,
+      value: `${projectAgencies} khách`,
+      percent: `${Math.round((projectAgencies / totalCustomers) * 100)}%`,
       color: "bg-primary",
     },
     {
-      label: "Khách lẻ cao cấp (30%)",
-      value: "374 khách",
-      percent: "30%",
+      label: `Khách lẻ cao cấp (${Math.round((premiumCustomers / totalCustomers) * 100)}%)`,
+      value: `${premiumCustomers} khách`,
+      percent: `${Math.round((premiumCustomers / totalCustomers) * 100)}%`,
       color: "bg-secondary",
     },
     {
-      label: "Đại lý bán lẻ (25%)",
-      value: "312 khách",
-      percent: "25%",
+      label: `Đại lý bán lẻ (${Math.round((retailAgencies / totalCustomers) * 100)}%)`,
+      value: `${retailAgencies} khách`,
+      percent: `${Math.round((retailAgencies / totalCustomers) * 100)}%`,
       color: "bg-tertiary",
     },
+    ...(other > 0 ? [{
+      label: `Khác (${Math.round((other / totalCustomers) * 100)}%)`,
+      value: `${other} khách`,
+      percent: `${Math.round((other / totalCustomers) * 100)}%`,
+      color: "bg-surface-dim",
+    }] : []),
   ];
 
   return (

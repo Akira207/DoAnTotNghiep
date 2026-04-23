@@ -1,21 +1,30 @@
-export default function ReportsStats() {
+export default function ReportsStats({ data = {} }) {
+  const { orders = [], productionTasks = [] } = data;
+
+  // Calculate stats from real data
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const totalCost = productionTasks.reduce((sum, task) => sum + (task.estimatedCost || 0), 0);
+  const profit = totalRevenue - totalCost;
+  const totalOrders = orders.length;
+  const totalCustomers = new Set(orders.map(o => o.customerId)).size;
+
   const stats = [
     {
       title: "Tổng doanh thu",
-      value: "12.5 tỷ",
-      unit: "VNĐ",
+      value: (totalRevenue / 1e9).toFixed(2),
+      unit: "tỷ VNĐ",
       icon: "payments",
       color: "text-[#0058BA]",
       bg: "bg-blue-50",
       border: "border-[#0058BA]",
-      growth: "+12%",
+      growth: `+${Math.floor((profit / totalRevenue) * 100) || 0}%`,
       growthColor: "text-green-600",
       growthBg: "bg-green-50",
     },
     {
       title: "Tổng chi phí",
-      value: "8.2 tỷ",
-      unit: "VNĐ",
+      value: (totalCost / 1e9).toFixed(2),
+      unit: "tỷ VNĐ",
       icon: "account_balance_wallet",
       color: "text-slate-600",
       bg: "bg-slate-50",
@@ -23,8 +32,8 @@ export default function ReportsStats() {
     },
     {
       title: "Lợi nhuận",
-      value: "4.3 tỷ",
-      unit: "VNĐ",
+      value: (profit / 1e9).toFixed(2),
+      unit: "tỷ VNĐ",
       icon: "monetization_on",
       color: "text-green-600",
       bg: "bg-green-50",
@@ -33,7 +42,7 @@ export default function ReportsStats() {
     },
     {
       title: "Số đơn hàng",
-      value: "450",
+      value: totalOrders.toString(),
       unit: "đơn",
       icon: "shopping_cart",
       color: "text-orange-500",
@@ -42,7 +51,7 @@ export default function ReportsStats() {
     },
     {
       title: "Số khách hàng",
-      value: "156",
+      value: totalCustomers.toString(),
       unit: "khách",
       icon: "group",
       color: "text-purple-600",

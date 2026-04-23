@@ -6,6 +6,9 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import "./index.css";
 import App from "./App.jsx";
 
+// Initialize axios interceptor
+import "./utils/axiosConfig.js";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
@@ -15,4 +18,5 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
 

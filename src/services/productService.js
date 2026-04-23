@@ -2,36 +2,44 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api/products";
 
-// GET
-export const getProducts = async () => {
-  const res = await axios.get(API);
-  return res.data;
-};
+// ✅ Helper to extract data from API response
+const getResponseData = (response) => response.data || response;
 
-// GET ALL
+// GET ALL PRODUCTS
 export const getAllProducts = async () => {
   const res = await axios.get(API);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-// CREATE (UPLOAD ẢNH)
+// GET PRODUCT BY ID
+export const getProductById = async (id) => {
+  const res = await axios.get(`${API}/${id}`);
+  const data = getResponseData(res);
+  return data.data || data;
+};
+
+// CREATE PRODUCT (WITH FILE UPLOAD)
 export const createProduct = async (formData) => {
   const res = await axios.post(API, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-// UPDATE
-export const updateProduct = async (id, data) => {
-  const res = await axios.put(`${API}/${id}`, data);
-  return res.data;
+// UPDATE PRODUCT
+export const updateProduct = async (id, productData) => {
+  const res = await axios.put(`${API}/${id}`, productData);
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-// DELETE
+// DELETE PRODUCT
 export const deleteProduct = async (id) => {
   const res = await axios.delete(`${API}/${id}`);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };

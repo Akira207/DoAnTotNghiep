@@ -1,12 +1,39 @@
-export default function RevenueChart() {
-  const data = [
-    { month: "Tháng 1", revenue: 60, cost: 45 },
-    { month: "Tháng 2", revenue: 75, cost: 55 },
-    { month: "Tháng 3", revenue: 65, cost: 50 },
-    { month: "Tháng 4", revenue: 90, cost: 65 },
-    { month: "Tháng 5", revenue: 80, cost: 60 },
-    { month: "Tháng 6", revenue: 100, cost: 70 },
-  ];
+const generateMonthlyData = (orders = []) => {
+  const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6"];
+  const monthlyData = {};
+
+  months.forEach(month => {
+    monthlyData[month] = { revenue: 0, cost: 0 };
+  });
+
+  orders.forEach(order => {
+    const date = new Date(order.createdAt || new Date());
+    const month = `Tháng ${date.getMonth() + 1}`;
+    
+    if (monthlyData[month]) {
+      monthlyData[month].revenue += order.totalAmount || 0;
+      monthlyData[month].cost += order.costAmount || (order.totalAmount * 0.6) || 0;
+    }
+  });
+
+  const data = months.map(month => ({
+    month,
+    revenue: Math.round(monthlyData[month].revenue / 100000000), // Convert to 100M units
+    cost: Math.round(monthlyData[month].cost / 100000000),
+  }));
+
+  // Normalize to percentages
+  const maxValue = Math.max(...data.map(d => Math.max(d.revenue, d.cost)), 1);
+  return data.map(item => ({
+    ...item,
+    revenue: (item.revenue / maxValue) * 100,
+    cost: (item.cost / maxValue) * 100,
+  }));
+};
+
+export default function RevenueChart({ data = {} }) {
+  const { orders = [] } = data;
+  const chartData = generateMonthlyData(orders);
 
   return (
     <div className="lg:col-span-2 bg-white rounded-sm shadow-sm p-8">
@@ -41,10 +68,10 @@ export default function RevenueChart() {
       <div className="flex h-72">
         {/* Y axis */}
         <div className="flex flex-col justify-between text-[10px] font-bold text-slate-400 pr-4 pb-8">
-          <span>2 tỷ</span>
-          <span>1.5 tỷ</span>
-          <span>1 tỷ</span>
-          <span>0.5 tỷ</span>
+          <span>2B</span>
+          <span>1.5B</span>
+          <span>1B</span>
+          <span>0.5B</span>
           <span>0</span>
         </div>
 
@@ -62,16 +89,16 @@ export default function RevenueChart() {
             </div>
 
             {/* Bars */}
-            {data.map((item, index) => (
+            {chartData.map((item, index) => (
               <div key={index} className="flex items-end gap-1.5 h-full z-10">
                 <div
-                  className="w-4 bg-[#0058BA] rounded-t-sm"
-                  style={{ height: `${item.revenue}%` }}
+                  className="w-4 bg-[#0058BA] rounded-t-sm hover:opacity-80 transition-opacity"
+                  style={{ height: `${Math.max(item.revenue, 5)}%` }}
                   title={`Revenue`}
                 ></div>
                 <div
-                  className="w-4 bg-[#E2E8F0] rounded-t-sm"
-                  style={{ height: `${item.cost}%` }}
+                  className="w-4 bg-[#E2E8F0] rounded-t-sm hover:opacity-80 transition-opacity"
+                  style={{ height: `${Math.max(item.cost, 5)}%` }}
                   title={`Cost`}
                 ></div>
               </div>
@@ -80,7 +107,7 @@ export default function RevenueChart() {
 
           {/* X axis */}
           <div className="flex justify-around mt-4 px-4">
-            {data.map((item, index) => (
+            {chartData.map((item, index) => (
               <span
                 key={index}
                 className="text-[10px] font-bold text-slate-400"

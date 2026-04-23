@@ -1,45 +1,54 @@
-export default function ProductionOrdersTable() {
-  const orders = [
-    {
-      id: "LSX-2023-089",
-      product: "Bộ bàn ăn Gỗ Sồi 8 ghế",
-      customer: "Chung cư Landmark 81",
-      value: 85000000,
-      status: "processing",
-    },
-    {
-      id: "LSX-2023-090",
-      product: "Tủ bếp Acrylic cao cấp",
-      customer: "Biệt thự Vinhomes Riverside",
-      value: 142500000,
-      status: "waiting",
-    },
-    {
-      id: "LSX-2023-091",
-      product: "Hệ tủ âm tường Phòng ngủ",
-      customer: "Căn hộ Metropole Thủ Thiêm",
-      value: 45200000,
-      status: "done",
-    },
-  ];
+const statusMap = {
+  processing: {
+    label: "Đang sản xuất",
+    class:
+      "bg-blue-50 text-[#0058BA] border border-blue-100",
+  },
+  waiting: {
+    label: "Chờ vật tư",
+    class:
+      "bg-orange-50 text-orange-600 border border-orange-100",
+  },
+  done: {
+    label: "Hoàn thành",
+    class:
+      "bg-green-50 text-green-700 border border-green-100",
+  },
+  "in-progress": {
+    label: "Đang sản xuất",
+    class:
+      "bg-blue-50 text-[#0058BA] border border-blue-100",
+  },
+  pending: {
+    label: "Chờ xử lý",
+    class:
+      "bg-orange-50 text-orange-600 border border-orange-100",
+  },
+  completed: {
+    label: "Hoàn thành",
+    class:
+      "bg-green-50 text-green-700 border border-green-100",
+  },
+};
 
-  const statusMap = {
-    processing: {
-      label: "Đang sản xuất",
-      class:
-        "bg-blue-50 text-[#0058BA] border border-blue-100",
-    },
-    waiting: {
-      label: "Chờ vật tư",
-      class:
-        "bg-orange-50 text-orange-600 border border-orange-100",
-    },
-    done: {
-      label: "Hoàn thành",
-      class:
-        "bg-green-50 text-green-700 border border-green-100",
-    },
-  };
+const getStatusClass = (status) => {
+  return statusMap[status]?.class || statusMap.pending.class;
+};
+
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || "Chờ xử lý";
+};
+
+export default function ProductionOrdersTable({ tasks = [] }) {
+  if (!tasks.length) {
+    return (
+      <section className="mt-8 bg-white rounded-sm shadow-sm overflow-hidden p-6 text-center">
+        <p className="text-slate-500">Chưa có dữ liệu lệnh sản xuất</p>
+      </section>
+    );
+  }
+
+  const displayTasks = tasks.slice(0, 10);
 
   return (
     <section className="mt-8 bg-white rounded-sm shadow-sm overflow-hidden">
@@ -78,34 +87,34 @@ export default function ProductionOrdersTable() {
           </thead>
 
           <tbody className="divide-y divide-slate-50">
-            {orders.map((o) => (
+            {displayTasks.map((task) => (
               <tr
-                key={o.id}
+                key={task._id}
                 className="hover:bg-slate-50 transition-colors"
               >
                 <td className="px-6 py-4 text-sm font-bold text-[#0058BA] whitespace-nowrap">
-                  {o.id}
+                  {task._id?.substring(0, 6)?.toUpperCase() || "N/A"}
                 </td>
 
                 <td className="px-6 py-4 text-sm font-medium text-slate-900 whitespace-nowrap">
-                  {o.product}
+                  {task.taskName || task.productName || "Sản phẩm"}
                 </td>
 
                 <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
-                  {o.customer}
+                  {task.customerName || "N/A"}
                 </td>
 
                 <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right whitespace-nowrap">
-                  {o.value.toLocaleString("vi-VN")}
+                  {(task.estimatedCost || 0).toLocaleString("vi-VN")}
                 </td>
 
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`px-2 py-1 text-[10px] font-bold rounded-sm uppercase ${
-                      statusMap[o.status].class
+                      getStatusClass(task.status)
                     }`}
                   >
-                    {statusMap[o.status].label}
+                    {getStatusLabel(task.status)}
                   </span>
                 </td>
               </tr>

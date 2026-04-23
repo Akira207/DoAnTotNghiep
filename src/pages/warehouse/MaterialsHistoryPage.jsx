@@ -8,14 +8,38 @@ import MaterialsHistoryActions from "../../features/masterialsHistory/MaterialsH
 import MaterialsHistoryTable from "../../features/masterialsHistory/MaterialsHistoryTable";
 import MaterialsReportBanner from "../../features/masterialsHistory/MaterialsReportBanner";
 
+import { getMaterialImports } from "../../services/materialImportService";
+
 export default function MaterialsHistoryPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    fetchMaterials();
+  }, []);
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const fetchMaterials = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getMaterialImports();
+      setMaterials(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Fetch materials error:", err);
+      setError(err.message || "Failed to fetch materials");
+      setMaterials([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-background text-on-background min-h-screen">
@@ -37,19 +61,35 @@ export default function MaterialsHistoryPage() {
         {/* <!-- Dashboard Content --> */}
         <div className="max-w-7xl w-full mx-auto">
             {/* Materials History header */}
-            <MaterialsHistoryHeader />
+            <MaterialsHistoryHeader onRefresh={fetchMaterials} />
 
-            {/* Materials History stats */}
-            <MaterialsHistoryStats />
+            {error && (
+              <div className="p-4 bg-red-100 text-red-800 rounded-lg">
+                {error}
+              </div>
+            )}
 
-            {/* Materials History actions */}
-            <MaterialsHistoryActions />
+            {loading && (
+              <div className="text-center text-slate-500">
+                Đang tải dữ liệu...
+              </div>
+            )}
 
-            {/* Materials History table */}
-            <MaterialsHistoryTable />
+            {!loading && (
+              <>
+                {/* Materials History stats */}
+                <MaterialsHistoryStats items={materials} />
 
-            {/* Materials Report banner */}
-            <MaterialsReportBanner />
+                {/* Materials History actions */}
+                <MaterialsHistoryActions onRefresh={fetchMaterials} />
+
+                {/* Materials History table */}
+                <MaterialsHistoryTable items={materials} onRefresh={fetchMaterials} />
+
+                {/* Materials Report banner */}
+                <MaterialsReportBanner items={materials} />
+              </>
+            )}
         </div>
       </main>
     </div>

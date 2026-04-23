@@ -1,4 +1,23 @@
-export default function FinanceSummary() {
+export default function FinanceSummary({ data = {} }) {
+  const { orders = [], payments = [] } = data;
+
+  // Calculate financial metrics
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const totalPaid = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const totalReceivable = totalRevenue - totalPaid;
+  
+  // Calculate monthly income
+  const currentMonth = new Date().getMonth();
+  const monthlyIncome = orders
+    .filter(o => new Date(o.createdAt).getMonth() === currentMonth)
+    .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+  const monthlyExpense = payments
+    .filter(p => new Date(p.createdAt).getMonth() === currentMonth)
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const profitMargin = totalRevenue > 0 ? ((totalRevenue - (totalRevenue * 0.6)) / totalRevenue * 100).toFixed(1) : 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
@@ -21,9 +40,9 @@ export default function FinanceSummary() {
           </p>
 
           <h3 className="text-5xl font-black mt-2 tracking-tighter">
-            4,820,500,000{" "}
+            {(totalReceivable / 1e9).toFixed(2)}{" "}
             <span className="text-xl font-normal opacity-70">
-              VND
+              Tỷ VND
             </span>
           </h3>
 
@@ -41,7 +60,7 @@ export default function FinanceSummary() {
                 <p className="text-[10px] opacity-70 uppercase">
                   Tiền vào tháng này
                 </p>
-                <p className="font-bold">+1.2B</p>
+                <p className="font-bold">+{(monthlyIncome / 1e9).toFixed(2)}B</p>
               </div>
             </div>
 
@@ -57,7 +76,7 @@ export default function FinanceSummary() {
                 <p className="text-[10px] opacity-70 uppercase">
                   Tiền ra tháng này
                 </p>
-                <p className="font-bold text-on-error">-450M</p>
+                <p className="font-bold text-on-error">-{(monthlyExpense / 1e9).toFixed(2)}B</p>
               </div>
             </div>
 
@@ -78,22 +97,22 @@ export default function FinanceSummary() {
             </div>
 
             <span className="px-2 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded">
-              +12.5%
+              +{profitMargin}%
             </span>
           </div>
 
           <p className="text-on-surface-variant text-sm font-medium">
-            Lợi nhuận ròng dự tính (Q3)
+            Lợi nhuận ròng dự tính
           </p>
 
           <h4 className="text-3xl font-bold text-on-surface mt-1">
-            1,450,000,000
+            {((totalRevenue - monthlyExpense) / 1e9).toFixed(2)}B
           </h4>
         </div>
 
         <div className="mt-6 pt-6 border-t border-surface-container">
           <p className="text-xs text-on-surface-variant italic">
-            Cập nhật lúc: 15:30 Hôm nay
+            Cập nhật lúc: {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} Hôm nay
           </p>
         </div>
       </div>

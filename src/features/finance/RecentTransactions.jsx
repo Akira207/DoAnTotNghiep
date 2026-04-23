@@ -9,52 +9,45 @@ const statusMap = {
     label: "Đang xử lý",
     class: "bg-secondary-container text-on-secondary-container",
   },
+  completed: {
+    label: "Hoàn thành",
+    class: "bg-tertiary-container text-on-tertiary-container",
+  },
+  pending: {
+    label: "Chờ xử lý",
+    class: "bg-secondary-container text-on-secondary-container",
+  },
 };
 
-const initialTransactions = [
-  {
-    id: "TRX-8291",
-    title: "Thanh toán Gỗ An Cường",
-    subtitle: "Đơn hàng nguyên liệu tháng 9",
-    method: "Chuyển khoản VCB",
-    time: "14/09/2023 - 09:12",
-    amount: -142000000,
-    status: "success",
-  },
-  {
-    id: "TRX-8290",
-    title: "Cọc dự án Villa Ciputra",
-    subtitle: "Khách hàng: Nguyễn Văn A",
-    method: "Tiền mặt",
-    time: "13/09/2023 - 16:45",
-    amount: 450000000,
-    status: "success",
-  },
-  {
-    id: "TRX-8289",
-    title: "Chi trả lương công nhân xưởng",
-    subtitle: "Kỳ lương tháng 08",
-    method: "Chuyển khoản loạt",
-    time: "10/09/2023 - 08:00",
-    amount: -312500000,
-    status: "success",
-  },
-  {
-    id: "TRX-8288",
-    title: "Phụ kiện Blum - Hafele",
-    subtitle: "Nhập hàng linh kiện ray trượt",
-    method: "Thẻ tín dụng doanh nghiệp",
-    time: "08/09/2023 - 14:22",
-    amount: -56800000,
-    status: "processing",
-  },
-];
+const getStatusInfo = (status) => {
+  return statusMap[status] || {
+    label: status || "Chờ xử lý",
+    class: "bg-surface-container text-on-surface-variant",
+  };
+};
 
 const formatMoney = (value) =>
   `${value > 0 ? "+" : "-"} ${Math.abs(value).toLocaleString("vi-VN")}`;
 
-export default function RecentTransactions() {
-  const [transactions] = useState(initialTransactions);
+export default function RecentTransactions({ payments = [] }) {
+  // Format payments data to match transaction structure
+  const transactions = payments.slice(0, 10).map(payment => ({
+    id: payment._id?.substring(0, 6)?.toUpperCase() || "N/A",
+    title: payment.paymentMethod || "Thanh toán",
+    subtitle: payment.note || "Giao dịch",
+    method: payment.paymentMethod || "Chuyển khoản",
+    time: new Date(payment.createdAt || new Date()).toLocaleString('vi-VN'),
+    amount: payment.amount || 0,
+    status: payment.status || "pending",
+  }));
+
+  if (!transactions.length) {
+    return (
+      <div className="mt-8 bg-white rounded-xl shadow-sm border border-surface-container p-6 text-center">
+        <p className="text-on-surface-variant">Chưa có giao dịch nào</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">
@@ -123,10 +116,10 @@ export default function RecentTransactions() {
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 text-[10px] font-bold rounded-full ${
-                        statusMap[t.status].class
+                        getStatusInfo(t.status).class
                       }`}
                     >
-                      {statusMap[t.status].label}
+                      {getStatusInfo(t.status).label}
                     </span>
                   </td>
 

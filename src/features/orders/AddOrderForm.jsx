@@ -35,10 +35,16 @@ export default function AddOrderForm({ onClose, onSuccess }) {
           axios.get(`${API}/products`),
         ]);
 
-        setCustomers(cRes.data);
-        setProducts(pRes.data);
+        // Handle both response formats: direct array or { data: [...] }
+        const customersData = Array.isArray(cRes.data) ? cRes.data : (cRes.data?.data || []);
+        const productsData = Array.isArray(pRes.data) ? pRes.data : (pRes.data?.data || []);
+        
+        setCustomers(customersData);
+        setProducts(productsData);
       } catch (err) {
         console.log("LOAD ERROR:", err);
+        setCustomers([]);
+        setProducts([]);
       }
     };
 

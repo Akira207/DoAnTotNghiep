@@ -7,14 +7,50 @@ import FinanceSummary from "../features/finance/FinanceSummary";
 import RevenueChart from "../features/finance/RevenueChart";
 import RecentTransactions from "../features/finance/RecentTransactions";
 
+import { getOrders } from "../services/orderService";
+import { getPayments } from "../services/paymentService";
+
 export default function FinancePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [financeData, setFinanceData] = useState({
+    orders: [],
+    payments: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    fetchFinanceData();
+  }, []);
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const fetchFinanceData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [ordersData, paymentsData] = await Promise.all([
+        getOrders().catch(() => []),
+        getPayments().catch(() => []),
+      ]);
+
+      setFinanceData({
+        orders: Array.isArray(ordersData) ? ordersData : [],
+        payments: Array.isArray(paymentsData) ? paymentsData : [],
+      });
+    } catch (err) {
+      console.error("Fetch finance error:", err);
+      setError(err.message || "Failed to fetch finance data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
       {/* Overlay */}
@@ -36,14 +72,30 @@ export default function FinancePage() {
         {/* Page Header */}
         <FinanceHeader />
 
-        {/* Summary */}
-        <FinanceSummary />
+        {error && (
+          <div className="p-4 bg-red-100 text-red-800 rounded-lg my-4">
+            {error}
+          </div>
+        )}
 
-        {/* Revenue Chart */}
-        <RevenueChart />
+        {loading && (
+          <div className="text-center text-slate-500 my-4">
+            Đang tải dữ liệu...
+          </div>
+        )}
 
-        {/* Recent Transactions */}
-        <RecentTransactions />
+        {!loading && (
+          <>
+            {/* Summary */}
+            <FinanceSummary data={financeData} />
+
+            {/* Revenue Chart */}
+            <RevenueChart data={financeData} />
+
+            {/* Recent Transactions */}
+            <RecentTransactions payments={financeData.payments} />
+          </>
+        )}
       </main>
     </div>
   );

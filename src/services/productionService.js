@@ -2,35 +2,42 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api/production-tasks";
 
+// ✅ Helper to extract data from API response
+const getResponseData = (response) => response.data || response;
+
 // GET ALL TASKS
 export const getProductionTasks = async (status) => {
   const res = await axios.get(API, {
     params: status ? { status } : {},
   });
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-// GET BY ID
+// GET TASK BY ID
 export const getProductionTaskById = async (id) => {
   const res = await axios.get(`${API}/${id}`);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-// CREATE
-export const createProductionTask = async (data) => {
-  const res = await axios.post(API, data);
-  return res.data;
+// CREATE TASK
+export const createProductionTask = async (taskData) => {
+  const res = await axios.post(API, taskData);
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-export const updateProductionTaskStatus = async (id, status) => {
-  const res = await axios.put(`${API}/production-tasks/${id}`, {
-    status,
-  });
-
-  return res.data;
+// UPDATE TASK
+export const updateProductionTask = async (id, taskData) => {
+  const res = await axios.put(`${API}/${id}`, taskData);
+  const data = getResponseData(res);
+  return data.data || data;
 };
-// DELETE
+
+// DELETE TASK
 export const deleteProductionTask = async (id) => {
   const res = await axios.delete(`${API}/${id}`);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };

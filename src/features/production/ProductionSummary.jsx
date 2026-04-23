@@ -1,10 +1,9 @@
-const ProductionSummary = ({ data }) => {
-  const {
-    total = 84,
-    completed = 52,
-    inProgress = 32,
-    urgent = 12,
-  } = data || {};
+const ProductionSummary = ({ tasks = [] }) => {
+  // Calculate stats from tasks
+  const total = tasks.length;
+  const completed = tasks.filter(t => (t.status || "").toLowerCase() === "completed").length;
+  const inProgress = tasks.filter(t => (t.status || "").toLowerCase() === "in-progress").length;
+  const urgent = tasks.filter(t => (t.priority || "").toLowerCase() === "high").length;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10">

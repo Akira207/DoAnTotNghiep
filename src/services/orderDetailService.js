@@ -2,43 +2,40 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/order-details";
 
-/* =========================
-   GET ALL ORDER DETAILS
-========================= */
+// ✅ Helper to extract data from API response
+const getResponseData = (response) => response.data || response;
+
+// GET ALL ORDER DETAILS
 export const getOrderDetails = async () => {
   const res = await axios.get(API_URL);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-/* =========================
-   GET ORDER DETAIL BY ID
-========================= */
+// GET ORDER DETAIL BY ID
 export const getOrderDetailById = async (id) => {
   const res = await axios.get(`${API_URL}/${id}`);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-/* =========================
-   CREATE ORDER DETAIL
-========================= */
-export const createOrderDetail = async (data) => {
-  // data = { orderId, productId, quantity, price, note }
-  const res = await axios.post(API_URL, data);
-  return res.data;
+// CREATE ORDER DETAIL
+export const createOrderDetail = async (detailData) => {
+  const res = await axios.post(API_URL, detailData);
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-/* =========================
-   UPDATE ORDER DETAIL
-========================= */
-export const updateOrderDetail = async (id, data) => {
-  const res = await axios.put(`${API_URL}/${id}`, data);
-  return res.data;
+// UPDATE ORDER DETAIL
+export const updateOrderDetail = async (id, detailData) => {
+  const res = await axios.put(`${API_URL}/${id}`, detailData);
+  const data = getResponseData(res);
+  return data.data || data;
 };
 
-/* =========================
-   DELETE ORDER DETAIL
-========================= */
+// DELETE ORDER DETAIL
 export const deleteOrderDetail = async (id) => {
   const res = await axios.delete(`${API_URL}/${id}`);
-  return res.data;
+  const data = getResponseData(res);
+  return data.data || data;
 };

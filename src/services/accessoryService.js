@@ -1,40 +1,40 @@
 import axios from "axios";
 
-const API = "http://localhost:5000/api/users";
+const API = "http://localhost:5000/api/accessories";
 
 // ✅ Helper to extract data from API response
 const getResponseData = (response) => response.data || response;
 
-// GET ALL USERS
-export const getUsers = async () => {
+// GET ALL ACCESSORIES
+export const getAccessories = async () => {
   const res = await axios.get(API);
   const data = getResponseData(res);
   return data.data || data;
 };
 
-// GET USER BY ID
-export const getUserById = async (id) => {
+// GET ACCESSORY BY ID
+export const getAccessoryById = async (id) => {
   const res = await axios.get(`${API}/${id}`);
   const data = getResponseData(res);
   return data.data || data;
 };
 
-// CREATE USER
-export const createUser = async (userData) => {
-  const res = await axios.post(API, userData);
+// CREATE ACCESSORY
+export const createAccessory = async (accessoryData) => {
+  const res = await axios.post(API, accessoryData);
   const data = getResponseData(res);
   return data.data || data;
 };
 
-// UPDATE USER
-export const updateUser = async (id, userData) => {
-  const res = await axios.put(`${API}/${id}`, userData);
+// UPDATE ACCESSORY
+export const updateAccessory = async (id, accessoryData) => {
+  const res = await axios.put(`${API}/${id}`, accessoryData);
   const data = getResponseData(res);
   return data.data || data;
 };
 
-// DELETE USER
-export const deleteUser = async (id) => {
+// DELETE ACCESSORY
+export const deleteAccessory = async (id) => {
   const res = await axios.delete(`${API}/${id}`);
   const data = getResponseData(res);
   return data.data || data;

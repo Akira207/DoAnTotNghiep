@@ -1,4 +1,4 @@
-export default function AccessoryHeader({ onOpenSidebar }) {
+export default function AccessoryHeader({ onOpenForm }) {
   return (
     <div className="mb-10">
       {/* Page header */}
@@ -37,7 +37,10 @@ export default function AccessoryHeader({ onOpenSidebar }) {
           </div>
 
           {/* Add button */}
-          <button className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-sm font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dim transition-all active:scale-[0.98]">
+          <button 
+            onClick={onOpenForm}
+            className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-sm font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dim transition-all active:scale-[0.98]"
+          >
             <span className="material-symbols-outlined text-lg">add</span>
             Thêm phụ kiện mới
           </button>

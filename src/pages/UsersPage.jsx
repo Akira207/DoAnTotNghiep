@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
@@ -10,11 +9,14 @@ import UsersTable from "../features/User/UsersTable";
 import AddUserForm from "../features/user/AddUserForm";
 import UserDetailModal from "../features/user/UserDetailModal";
 
+import { getUsers, createUser, updateUser, deleteUser } from "../services/userService";
+
 export default function UsersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // FORM
   const [formOpen, setFormOpen] = useState(false);
@@ -30,12 +32,13 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-
-      const res = await axios.get("http://localhost:5000/api/users");
-
-      setUsers(res.data.data || []);
+      setError(null);
+      const data = await getUsers();
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Fetch users error:", err);
+      setError(err.message || "Failed to fetch users");
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -49,12 +52,9 @@ export default function UsersPage() {
   const handleSubmit = async (data) => {
     try {
       if (editUser) {
-        await axios.put(
-          `http://localhost:5000/api/users/${editUser._id}`,
-          data
-        );
+        await updateUser(editUser._id, data);
       } else {
-        await axios.post("http://localhost:5000/api/users", data);
+        await createUser(data);
       }
 
       setFormOpen(false);
@@ -62,6 +62,7 @@ export default function UsersPage() {
       fetchUsers();
     } catch (err) {
       console.error("Save user error:", err);
+      setError(err.message || "Failed to save user");
     }
   };
 
@@ -70,10 +71,11 @@ export default function UsersPage() {
     if (!window.confirm("Bạn có chắc muốn xoá user này?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/users/${id}`);
+      await deleteUser(id);
       fetchUsers();
     } catch (err) {
       console.error("Delete error:", err);
+      setError(err.message || "Failed to delete user");
     }
   };
 

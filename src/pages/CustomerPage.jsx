@@ -57,7 +57,7 @@ export default function CustomerPage() {
       <main className="p-4 md:p-8 lg:ml-[280px] space-y-6">
         <CustomerHeader />
 
-        <CustomerStats />
+        <CustomerStats customers={customers} />
 
         <CustomerTable
           customers={customers}

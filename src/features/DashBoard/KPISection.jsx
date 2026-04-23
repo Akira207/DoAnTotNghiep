@@ -1,48 +1,57 @@
-const kpiData = [
-  {
-    title: "Tổng đơn hàng",
-    value: "1,248",
-    change: "+12%",
-    icon: "shopping_bag",
-    border: "border-primary",
-    iconBg: "bg-primary-container",
-    iconColor: "text-on-primary-container",
-    changeColor: "text-tertiary",
-    changeBg: "bg-tertiary-container/20",
-  },
-  {
-    title: "Doanh thu (VNĐ)",
-    value: "4.82B",
-    change: "+8.4%",
-    icon: "payments",
-    border: "border-secondary",
-    iconBg: "bg-secondary-container",
-    iconColor: "text-on-secondary-container",
-    changeColor: "text-tertiary",
-    changeBg: "bg-tertiary-container/20",
-  },
-  {
-    title: "Tiến độ sản xuất",
-    value: "82%",
-    progress: 82,
-    icon: "precision_manufacturing",
-    border: "border-tertiary",
-    iconBg: "bg-tertiary-container",
-    iconColor: "text-on-tertiary-container",
-    status: "Hoạt động",
-  },
-  {
-    title: "Sản phẩm tồn kho",
-    value: "432",
-    icon: "inventory",
-    border: "border-error",
-    iconBg: "bg-error-container/20",
-    iconColor: "text-error",
-    status: "Cảnh báo",
-  },
-];
+const KPISection = ({ data = {} }) => {
+  const { orders = [], products = [], customers = [], users = [] } = data;
 
-const KPISection = () => {
+  // Calculate KPI values from actual data
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const completedOrders = orders.filter(o => o.status === "completed").length;
+  const completionRate = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
+  const totalProducts = products.length;
+
+  const kpiData = [
+    {
+      title: "Tổng đơn hàng",
+      value: totalOrders.toLocaleString("vi-VN"),
+      change: `+${completedOrders}`,
+      icon: "shopping_bag",
+      border: "border-primary",
+      iconBg: "bg-primary-container",
+      iconColor: "text-on-primary-container",
+      changeColor: "text-tertiary",
+      changeBg: "bg-tertiary-container/20",
+    },
+    {
+      title: "Doanh thu (VNĐ)",
+      value: `${(totalRevenue / 1e9).toFixed(2)}B`,
+      change: "+8.4%",
+      icon: "payments",
+      border: "border-secondary",
+      iconBg: "bg-secondary-container",
+      iconColor: "text-on-secondary-container",
+      changeColor: "text-tertiary",
+      changeBg: "bg-tertiary-container/20",
+    },
+    {
+      title: "Tiến độ sản xuất",
+      value: `${completionRate}%`,
+      progress: completionRate,
+      icon: "precision_manufacturing",
+      border: "border-tertiary",
+      iconBg: "bg-tertiary-container",
+      iconColor: "text-on-tertiary-container",
+      status: completionRate >= 80 ? "Hoạt động" : "Chậm",
+    },
+    {
+      title: "Sản phẩm tồn kho",
+      value: totalProducts.toLocaleString("vi-VN"),
+      icon: "inventory",
+      border: "border-error",
+      iconBg: "bg-error-container/20",
+      iconColor: "text-error",
+      status: totalProducts > 100 ? "Bình thường" : "Cảnh báo",
+    },
+  ];
+
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {kpiData.map((item, index) => (

@@ -1,4 +1,9 @@
-export default function WarehouseBottomCards() {
+export default function WarehouseBottomCards({ items = [] }) {
+  // Calculate warehouse optimization suggestions
+  const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const readyToShip = items.filter(item => (item.status || "").toLowerCase() === "ready").length;
+  const utilizationRate = totalItems > 0 ? Math.min(100, (readyToShip / totalItems) * 100) : 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Card 1 */}
@@ -18,8 +23,8 @@ export default function WarehouseBottomCards() {
           </h4>
 
           <p className="text-sm text-on-surface-variant leading-relaxed">
-            Hệ thống gợi ý sắp xếp lại Khu vực B để tăng 15% diện tích lưu
-            trữ khả dụng dựa trên tần suất xuất kho tháng qua.
+            Hệ thống gợi ý sắp xếp lại kho để tăng {(utilizationRate).toFixed(0)}% diện tích lưu
+            trữ khả dụng dựa trên tần suất xuất kho {new Date().toLocaleString('vi-VN', { month: 'long' })}.
           </p>
 
           <button className="mt-4 text-xs font-bold text-primary flex items-center gap-1 group">
@@ -48,7 +53,7 @@ export default function WarehouseBottomCards() {
           </h4>
 
           <p className="text-sm text-on-surface-variant leading-relaxed">
-            Đã chuẩn bị xong 24 đơn hàng cần giao trong sáng nay. Các xe
+            Đã chuẩn bị xong {readyToShip} sản phẩm sẵn sàng giao hàng. Các xe
             tải vận chuyển đã được điều phối vào khung giờ 08:00 - 10:00.
           </p>
 

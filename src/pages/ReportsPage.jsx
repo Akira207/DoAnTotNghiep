@@ -8,14 +8,49 @@ import RevenueChart from "../features/resports/RevenueChart";
 import OrderStatusChart from "../features/resports/OrderStatusChart";
 import ProductionOrdersTable from "../features/resports/ProductionOrdersTable";
 
+import { getOrders } from "../services/orderService";
+import { getProductionTasks } from "../services/productionService";
+
 export default function ReportsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [reportsData, setReportsData] = useState({
+    orders: [],
+    productionTasks: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    fetchReportsData();
+  }, []);
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const fetchReportsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [ordersData, tasksData] = await Promise.all([
+        getOrders().catch(() => []),
+        getProductionTasks().catch(() => []),
+      ]);
+
+      setReportsData({
+        orders: Array.isArray(ordersData) ? ordersData : [],
+        productionTasks: Array.isArray(tasksData) ? tasksData : [],
+      });
+    } catch (err) {
+      console.error("Fetch reports error:", err);
+      setError(err.message || "Failed to fetch reports data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
@@ -41,19 +76,35 @@ export default function ReportsPage() {
         {/*header */}
         <ResportsHeader />
 
-        {/* stats */}
-        <ReportsStats />
+        {error && (
+          <div className="p-4 bg-red-100 text-red-800 rounded-lg my-4">
+            {error}
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue */}
-          <RevenueChart />
+        {loading && (
+          <div className="text-center text-slate-500 my-4">
+            Đang tải dữ liệu...
+          </div>
+        )}
 
-          {/* Order status chart */}
-          <OrderStatusChart />
+        {!loading && (
+          <>
+            {/* stats */}
+            <ReportsStats data={reportsData} />
 
-        </div>
-          {/* Production orders table */}
-          <ProductionOrdersTable />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Revenue */}
+              <RevenueChart data={reportsData} />
+
+              {/* Order status chart */}
+              <OrderStatusChart data={reportsData} />
+            </div>
+
+            {/* Production orders table */}
+            <ProductionOrdersTable tasks={reportsData.productionTasks} />
+          </>
+        )}
       </main>
     </div>
   );

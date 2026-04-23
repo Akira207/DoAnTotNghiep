@@ -7,14 +7,38 @@ import WarehouseStats from "../../features/productsWarehouse/WarehouseStats";
 import WarehouseTable from "../../features/productsWarehouse/WarehouseTable";
 import WarehouseBottomCards from "../../features/productsWarehouse/WarehouseBottomCards";
 
+import { getWarehouse } from "../../services/warehouseService";
+
 export default function ProductsWarehousePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [warehouseItems, setWarehouseItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    fetchWarehouse();
+  }, []);
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const fetchWarehouse = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getWarehouse();
+      setWarehouseItems(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Fetch warehouse error:", err);
+      setError(err.message || "Failed to fetch warehouse data");
+      setWarehouseItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-background text-on-background min-h-screen">
@@ -36,16 +60,32 @@ export default function ProductsWarehousePage() {
         {/* <!-- Dashboard Content --> */}
         <div className="space-y-8 max-w-[1600px] mx-auto w-full pb-12">
           {/* warehouse header */}
-          <WarehouseHeader />
+          <WarehouseHeader onRefresh={fetchWarehouse} />
 
-          {/* warehouse stats */}
-          <WarehouseStats />
+          {error && (
+            <div className="p-4 bg-red-100 text-red-800 rounded-lg">
+              {error}
+            </div>
+          )}
 
-            {/* warehouse table */}
-            <WarehouseTable />
+          {loading && (
+            <div className="text-center text-slate-500">
+              Đang tải dữ liệu...
+            </div>
+          )}
 
-            {/* warehouse bottom cards */}
-            <WarehouseBottomCards />
+          {!loading && (
+            <>
+              {/* warehouse stats */}
+              <WarehouseStats items={warehouseItems} />
+
+              {/* warehouse table */}
+              <WarehouseTable items={warehouseItems} onRefresh={fetchWarehouse} />
+
+              {/* warehouse bottom cards */}
+              <WarehouseBottomCards items={warehouseItems} />
+            </>
+          )}
         </div>
       </main>
     </div>

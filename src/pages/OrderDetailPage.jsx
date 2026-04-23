@@ -73,7 +73,7 @@ export default function OrderDetailPage() {
           <OrderItemsSection
             items={orderData?.details || []}
             payment={orderData?.payment || null}
-            order={orderData?.order || orderData?.order || null}
+            order={orderData?.order || orderData}
           />
         </div>
       </main>

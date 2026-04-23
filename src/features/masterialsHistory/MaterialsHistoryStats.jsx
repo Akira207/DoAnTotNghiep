@@ -1,4 +1,11 @@
-export default function MaterialsHistoryStats() {
+export default function MaterialsHistoryStats({ items = [] }) {
+  // Calculate stats from material imports
+  const totalValue = items.reduce((sum, item) => sum + (item.totalCost || 0), 0);
+  const totalImports = items.length;
+  const priorityMaterial = items.length > 0 ? items[0] : null;
+  
+  const monthlyChange = Math.floor((items.length / Math.max(1, items.length - 1)) * 12) || 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       {/* Tổng giá trị nhập */}
@@ -8,14 +15,14 @@ export default function MaterialsHistoryStats() {
         </p>
 
         <p className="text-2xl font-black text-on-surface tracking-tight">
-          1.250.000.000đ
+          {(totalValue / 1e9).toFixed(2)}B đ
         </p>
 
         <div className="mt-2 flex items-center text-tertiary font-bold text-xs">
           <span className="material-symbols-outlined text-sm mr-1">
             trending_up
           </span>
-          +12% tháng này
+          +{monthlyChange}% tháng này
         </div>
       </div>
 
@@ -26,11 +33,11 @@ export default function MaterialsHistoryStats() {
         </p>
 
         <p className="text-2xl font-black text-on-surface tracking-tight">
-          48
+          {totalImports}
         </p>
 
         <div className="mt-2 text-slate-400 text-xs font-medium">
-          Cập nhật lúc 10:30 AM
+          Cập nhật lúc {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
 
@@ -42,11 +49,11 @@ export default function MaterialsHistoryStats() {
           </p>
 
           <p className="text-2xl font-black text-on-secondary-container tracking-tight">
-            Gỗ Sồi Mỹ - A1
+            {priorityMaterial?.materialName || "Chưa cập nhật"}
           </p>
 
           <p className="mt-1 text-on-secondary-container/70 text-sm font-medium">
-            Yêu cầu hoàn thành trước ngày 20/11
+            {priorityMaterial?.supplier || "Chưa cập nhật"}
           </p>
         </div>
 

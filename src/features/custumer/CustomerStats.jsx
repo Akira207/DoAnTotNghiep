@@ -1,31 +1,44 @@
 import React from "react";
 
-export default function CustomerStats() {
+export default function CustomerStats({ customers = [] }) {
+  // Calculate stats from customers data
+  const totalCustomers = customers.length;
+  const activeCustomers = customers.filter(c => (c.status || "active").toLowerCase() === "active").length;
+  const newCustomers = customers.filter(c => {
+    const createdDate = new Date(c.createdAt || new Date());
+    const currentDate = new Date();
+    const monthDiff = (currentDate.getFullYear() - createdDate.getFullYear()) * 12 + 
+                      (currentDate.getMonth() - createdDate.getMonth());
+    return monthDiff === 0;
+  }).length;
+  
+  const totalDebt = customers.reduce((sum, c) => sum + (c.debt || 0), 0);
+
   const stats = [
     {
       title: "Tổng số khách hàng",
-      value: "1,248",
-      sub: "+12%",
+      value: totalCustomers.toLocaleString('vi-VN'),
+      sub: `+${newCustomers}`,
       subClass: "text-tertiary text-xs font-bold",
       border: "border-primary",
     },
     {
-      title: "Đại lý hoạt động",
-      value: "156",
-      sub: "/ 200",
+      title: "Khách hàng hoạt động",
+      value: activeCustomers.toLocaleString('vi-VN'),
+      sub: `/ ${totalCustomers}`,
       subClass: "text-slate-400 text-xs font-medium",
       border: "border-secondary",
     },
     {
-      title: "Khách lẻ mới",
-      value: "42",
+      title: "Khách hàng mới",
+      value: newCustomers.toString(),
       sub: "Tháng này",
       subClass: "text-tertiary text-xs font-bold",
       border: "border-tertiary",
     },
     {
       title: "Công nợ khách hàng",
-      value: "420.5",
+      value: (totalDebt / 1000000).toFixed(1),
       unit: "Triệu",
       border: "border-error",
       isDebt: true,

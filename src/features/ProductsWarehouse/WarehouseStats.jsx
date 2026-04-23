@@ -1,43 +1,49 @@
-const stats = [
-  {
-    title: "Tổng tồn kho",
-    value: "2,845",
-    unit: "sp",
-    icon: "inventory",
-    color: "primary",
-    extra: "+12.5%",
-    extraStyle: "text-tertiary bg-tertiary/10",
-  },
-  {
-    title: "Đang đóng gói",
-    value: "142",
-    unit: "kiện",
-    icon: "package_2",
-    color: "secondary",
-    extra: "Đang xử lý",
-    extraStyle: "text-on-surface-variant bg-surface-container",
-  },
-  {
-    title: "Sẵn sàng giao",
-    value: "86",
-    unit: "đơn",
-    icon: "local_shipping",
-    color: "tertiary",
-    extra: "Sẵn sàng",
-    extraStyle: "text-tertiary bg-tertiary/10",
-  },
-  {
-    title: "Tồn kho thấp",
-    value: "12",
-    unit: "sp",
-    icon: "warning",
-    color: "error",
-    extra: "Cảnh báo",
-    extraStyle: "text-error bg-error/10",
-  },
-];
+const WarehouseStats = ({ items = [] }) => {
+  // Calculate stats from actual warehouse data
+  const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const lowStockItems = items.filter(item => (item.quantity || 0) < 10).length;
+  const readyToShip = items.filter(item => (item.status || "").toLowerCase() === "ready").length;
+  const packing = items.filter(item => (item.status || "").toLowerCase() === "packing").length;
 
-const WarehouseStats = () => {
+  const stats = [
+    {
+      title: "Tổng tồn kho",
+      value: totalItems.toLocaleString("vi-VN"),
+      unit: "sp",
+      icon: "inventory",
+      color: "primary",
+      extra: `+${Math.floor(totalItems * 0.125)}`,
+      extraStyle: "text-tertiary bg-tertiary/10",
+    },
+    {
+      title: "Đang đóng gói",
+      value: packing.toLocaleString("vi-VN"),
+      unit: "kiện",
+      icon: "package_2",
+      color: "secondary",
+      extra: "Đang xử lý",
+      extraStyle: "text-on-surface-variant bg-surface-container",
+    },
+    {
+      title: "Sẵn sàng giao",
+      value: readyToShip.toLocaleString("vi-VN"),
+      unit: "đơn",
+      icon: "local_shipping",
+      color: "tertiary",
+      extra: "Sẵn sàng",
+      extraStyle: "text-tertiary bg-tertiary/10",
+    },
+    {
+      title: "Tồn kho thấp",
+      value: lowStockItems.toLocaleString("vi-VN"),
+      unit: "sp",
+      icon: "warning",
+      color: "error",
+      extra: "Cảnh báo",
+      extraStyle: "text-error bg-error/10",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {stats.map((item, index) => (

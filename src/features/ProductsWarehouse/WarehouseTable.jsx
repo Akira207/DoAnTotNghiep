@@ -1,41 +1,5 @@
 import { useState } from "react";
 
-const mockData = [
-  {
-    id: 1,
-    name: "Ghế Lounge Gỗ Sồi",
-    collection: "Bộ sưu tập Xuân 2024",
-    sku: "PLT-CH-001",
-    quantity: 45,
-    location: "Khu A - Kệ 04",
-    status: "in_stock",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBnRl0hUpn7lLYEqIn_S07wxLAyA9hpshTK28M3Uu9lQJThawCIM9Z2wS2QoOD87XH5s9qspyoRrzxKSlAIDircyRUMDZdAypbXNCCKyXdq50DC24VrF-tMzeaLyQ0W-gOC-y_qi7ePdSvGXCFjHaoThYF0tY7A6G3FMZ-P_6raTWM39IcSEP1oGUnLace6vK536bx4i0nLFh0FtaHzlCHDhE_kgkqw7QKA2vIHsYYpeGUjvi9q71UhsnhVI6ud_zLjrlNkEubgWRtE",
-  },
-  {
-    id: 2,
-    name: "Bàn Làm Việc Industrial",
-    collection: "Dòng văn phòng cao cấp",
-    sku: "PLT-DK-042",
-    quantity: 8,
-    location: "Khu B - Kệ 12",
-    status: "low_stock",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCkdE3lX3aJAF41qyh7oBAzO94XXRda3RgB-TEBrGA09-eSUaWfWFH-e2uTARWbLv7W3GwirZfqigRWd53Skg0hsEaWVgnVcYvVr9oFX_EcwhWKIqiWZxYZyIpDE4-rgLtVrpHDrxkTGQIfkRya4nJ-J_m5dKw2r7TdVohLPtW-IB3Vcs2n5csww5sls8sk-96OTYG7IxCjCxRIWLNRjAPk3v8gNK0Drmnorv1v9OrysfgT0-GZDj7s-QHE_pKynSdxUURX1Z5JHoUq",
-  },
-  {
-    id: 3,
-    name: "Sofa Velvet Xanh Forest",
-    collection: "Dòng nội thất phòng khách",
-    sku: "PLT-SF-015",
-    quantity: 22,
-    location: "Khu C - Tầng 1",
-    status: "packing",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAj8H1TTsV_8noy06ejokIRo-pInqsvtlStgHu6ZtCMSVxGmdg9U_G0edWeWvGVzK3KPnA82H2QKqrOSgVVuExOY0_Rh6RxXpOxh6hfbQAfWHMuLUlmB1a24qbBiPUH5a-ASs6RaMvusTcupVIHlpEXWdDUEwSjCoXJ6gbNap0BuX6qHD2fSP0f2JR1WFz08xykuaZqYKiuNiPOjajpClY-ZPTz9FEM4TfMZYiItGgxZcRNTCuE9zIUH8dNhV5Ah9Y0whN6c-flNj0m",
-  },
-];
-
 const statusMap = {
   in_stock: {
     label: "Còn hàng",
@@ -49,10 +13,34 @@ const statusMap = {
     label: "Chờ đóng gói",
     className: "bg-secondary/10 text-secondary",
   },
+  ready: {
+    label: "Sẵn sàng giao",
+    className: "bg-tertiary/10 text-tertiary",
+  },
 };
 
-export default function WarehouseTable() {
-  const [data] = useState(mockData);
+const getStatus = (quantity, itemStatus) => {
+  if (itemStatus) {
+    const key = itemStatus.toLowerCase().replace(" ", "_");
+    return statusMap[key] || { label: itemStatus, className: "bg-surface-container/30 text-on-surface-variant" };
+  }
+  
+  if (quantity < 10) {
+    return statusMap.low_stock;
+  }
+  return statusMap.in_stock;
+};
+
+export default function WarehouseTable({ items = [], onRefresh }) {
+  const [data] = useState(items);
+
+  if (!data.length) {
+    return (
+      <section className="bg-surface-container-lowest rounded-xl shadow-sm p-8 text-center">
+        <p className="text-on-surface-variant">Chưa có dữ liệu kho hàng</p>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
@@ -64,7 +52,10 @@ export default function WarehouseTable() {
         </h3>
 
         <div className="flex items-center gap-2 flex-1 justify-end">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dim rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap">
+          <button 
+            onClick={onRefresh}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dim rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap"
+          >
             <span className="material-symbols-outlined text-[20px]">add</span>
             <span>Nhập kho mới</span>
           </button>
@@ -107,35 +98,35 @@ export default function WarehouseTable() {
 
           <tbody className="divide-y divide-surface-container">
             {data.map((item) => {
-              const status = statusMap[item.status];
+              const status = getStatus(item.quantity, item.status);
 
               return (
                 <tr
-                  key={item.id}
+                  key={item._id || item.id}
                   className="hover:bg-surface-container-low/50 transition-colors group"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
                         <img
-                          src={item.image}
+                          src={item.image || "https://via.placeholder.com/48"}
                           alt="Sản phẩm"
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div>
                         <p className="font-bold text-sm text-on-surface">
-                          {item.name}
+                          {item.name || item.productName || "Sản phẩm"}
                         </p>
                         <p className="text-xs text-on-surface-variant">
-                          {item.collection}
+                          {item.category || "N/A"}
                         </p>
                       </div>
                     </div>
                   </td>
 
                   <td className="px-6 py-4 font-mono text-xs font-semibold text-outline">
-                    {item.sku}
+                    {item.sku || item._id?.substring(0, 6) || "N/A"}
                   </td>
 
                   <td
@@ -143,7 +134,7 @@ export default function WarehouseTable() {
                       item.quantity < 10 ? "text-error" : ""
                     }`}
                   >
-                    {item.quantity}
+                    {item.quantity || 0}
                   </td>
 
                   <td className="px-6 py-4">
@@ -151,7 +142,7 @@ export default function WarehouseTable() {
                       <span className="material-symbols-outlined text-[14px]">
                         grid_view
                       </span>
-                      {item.location}
+                      {item.location || "N/A"}
                     </div>
                   </td>
 
