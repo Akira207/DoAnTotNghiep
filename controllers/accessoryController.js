@@ -1,11 +1,18 @@
 import Accessory from "../models/Accessory.js";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 // CREATE
 export const createAccessory = async (req, res) => {
   try {
     const { name, type, price, description } = req.body;
     if (!name || !price) {
-      return res.status(400).json({ message: "Name and price are required" });
+      return badRequest(res, "Name and price are required");
     }
     const accessory = new Accessory({
       name,
@@ -14,9 +21,9 @@ export const createAccessory = async (req, res) => {
       description
     });
     const saved = await accessory.save();
-    res.status(201).json(saved);
+    return createdResponse(res, saved, "Accessory created successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -36,9 +43,9 @@ export const getAllAccessories = async (req, res) => {
       filter.name = { $regex: keyword, $options: "i" };
     }
     const accessories = await Accessory.find(filter);
-    res.json(accessories);
+    return successResponse(res, accessories, "Accessories fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -48,11 +55,11 @@ export const getAccessoryById = async (req, res) => {
   try {
     const accessory = await Accessory.findById(req.params.id);
     if (!accessory) {
-      return res.status(404).json({ message: "Accessory not found" });
+      return notFound(res, "Accessory not found");
     }
-    res.json(accessory);
+    return successResponse(res, accessory, "Accessory fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -66,11 +73,11 @@ export const updateAccessory = async (req, res) => {
       { new: true }
     );
     if (!updated) {
-      return res.status(404).json({ message: "Accessory not found" });
+      return notFound(res, "Accessory not found");
     }
-    res.json(updated);
+    return successResponse(res, updated, "Accessory updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -80,10 +87,10 @@ export const deleteAccessory = async (req, res) => {
   try {
     const deleted = await Accessory.findByIdAndDelete(req.params.id);
     if (!deleted) {
-      return res.status(404).json({ message: "Accessory not found" });
+      return notFound(res, "Accessory not found");
     }
-    res.json({ message: "Deleted successfully" });
+    return successResponse(res, null, "Accessory deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };

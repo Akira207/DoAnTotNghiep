@@ -1,13 +1,19 @@
 import Warehouse from "../models/WareHouse.js";
+import {
+  successResponse,
+  createdResponse,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 // CREATE
 export const createWarehouse = async (req, res) => {
   try {
     const data = new Warehouse(req.body);
     const saved = await data.save();
-    res.status(201).json(saved);
+    return createdResponse(res, saved, "Warehouse created successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -15,9 +21,9 @@ export const createWarehouse = async (req, res) => {
 export const getAllWarehouse = async (req, res) => {
   try {
     const data = await Warehouse.find().populate("productId");
-    res.json(data);
+    return successResponse(res, data, "Warehouses fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -26,11 +32,11 @@ export const getWarehouseById = async (req, res) => {
   try {
     const data = await Warehouse.findById(req.params.id).populate("productId");
     if (!data) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Warehouse not found");
     }
-    res.json(data);
+    return successResponse(res, data, "Warehouse fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -41,11 +47,11 @@ export const updateWarehouse = async (req, res) => {
       new: true,
     });
     if (!updated) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Warehouse not found");
     }
-    res.json(updated);
+    return successResponse(res, updated, "Warehouse updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -54,10 +60,10 @@ export const deleteWarehouse = async (req, res) => {
   try {
     const deleted = await Warehouse.findByIdAndDelete(req.params.id);
     if (!deleted) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Warehouse not found");
     }
-    res.json({ message: "Deleted successfully" });
+    return successResponse(res, null, "Warehouse deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };

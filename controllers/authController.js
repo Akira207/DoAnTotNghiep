@@ -1,6 +1,11 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+  successResponse,
+  badRequest,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 export const login = async (req, res) => {
   try {
@@ -8,32 +13,24 @@ export const login = async (req, res) => {
 
     // 1. validate input
     if (!username || !password) {
-      return res.status(400).json({
-        message: "Username and password are required",
-      });
+      return badRequest(res, "Username and password are required");
     }
 
     // 2. find user
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(400).json({
-        message: "User not found",
-      });
+      return badRequest(res, "User not found");
     }
 
     // 3. check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Wrong password",
-      });
+      return badRequest(res, "Wrong password");
     }
 
     // 4. check JWT secret
     if (!process.env.JWT_SECRET) {
-      return res.status(500).json({
-        message: "JWT_SECRET is not defined in environment",
-      });
+      return errorResponse(res, 500, "JWT_SECRET is not defined in environment");
     }
 
     // 5. create token
@@ -47,18 +44,15 @@ export const login = async (req, res) => {
     );
 
     // 6. response
-    return res.json({
-      message: "Login successful",
+    return successResponse(res, {
       token,
       user: {
         id: user._id,
         username: user.username,
         role: user.role,
       },
-    });
+    }, "Login successful");
   } catch (error) {
-    return res.status(500).json({
-      message: "Login error",
-    });
+    return errorResponse(res, 500, "Login error");
   }
 };

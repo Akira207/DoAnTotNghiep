@@ -1,4 +1,11 @@
 import MaterialImport from "../models/MaterialImport.js";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 // CREATE
 export const createMaterialImport = async (req, res) => {
@@ -14,12 +21,10 @@ export const createMaterialImport = async (req, res) => {
       note,
     } = req.body;
     if (!materialName || !quantity || !price) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return badRequest(res, "Missing required fields");
     }
     if (quantity < 0 || price < 0) {
-      return res
-        .status(400)
-        .json({ message: "Quantity and price must be >= 0" });
+      return badRequest(res, "Quantity and price must be >= 0");
     }
     const item = new MaterialImport({
       materialName,
@@ -32,9 +37,9 @@ export const createMaterialImport = async (req, res) => {
       note,
     });
     const saved = await item.save();
-    res.status(201).json(saved);
+    return createdResponse(res, saved, "Material import created successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -55,9 +60,9 @@ export const getAllMaterialImports = async (req, res) => {
       if (toDate) filter.importDate.$lte = new Date(toDate);
     }
     const list = await MaterialImport.find(filter);
-    res.json(list);
+    return successResponse(res, list, "Material imports fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -66,11 +71,11 @@ export const getMaterialImportById = async (req, res) => {
   try {
     const item = await MaterialImport.findById(req.params.id);
     if (!item) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Material import not found");
     }
-    res.json(item);
+    return successResponse(res, item, "Material import fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -88,10 +93,10 @@ export const updateMaterialImport = async (req, res) => {
       note,
     } = req.body;
     if (quantity && quantity < 0) {
-      return res.status(400).json({ message: "Quantity must be >= 0" });
+      return badRequest(res, "Quantity must be >= 0");
     }
     if (price && price < 0) {
-      return res.status(400).json({ message: "Price must be >= 0" });
+      return badRequest(res, "Price must be >= 0");
     }
     const updated = await MaterialImport.findByIdAndUpdate(
       req.params.id,
@@ -108,11 +113,11 @@ export const updateMaterialImport = async (req, res) => {
       { new: true },
     );
     if (!updated) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Material import not found");
     }
-    res.json(updated);
+    return successResponse(res, updated, "Material import updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -122,11 +127,11 @@ export const deleteMaterialImport = async (req, res) => {
     const deleted = await MaterialImport.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Material import not found");
     }
 
-    res.json({ message: "Deleted successfully" });
+    return successResponse(res, null, "Material import deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };

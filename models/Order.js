@@ -18,7 +18,32 @@ const orderSchema = new mongoose.Schema(
       default: Date.now,
     },
 
+    subtotal: {
+      type: Number,
+      default: 0,
+    },
+
+    vat: {
+      type: Number,
+      default: 0,
+    },
+
+    vatAmount: {
+      type: Number,
+      default: 0,
+    },
+
     totalAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    depositAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    remainingAmount: {
       type: Number,
       default: 0,
     },

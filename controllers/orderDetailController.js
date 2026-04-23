@@ -2,6 +2,13 @@ import OrderDetail from "../models/OrderDetail.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import ProductionTask from "../models/ProductionTask.js";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 // CREATE
 export const createOrderDetail = async (req, res) => {
@@ -9,12 +16,12 @@ export const createOrderDetail = async (req, res) => {
     const { orderId, productId, quantity, price, note } = req.body;
     // validate
     if (!orderId || !productId || !quantity || !price) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return badRequest(res, "Missing required fields");
     }
     const order = await Order.findById(orderId);
     const product = await Product.findById(productId);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!order) return notFound(res, "Order not found");
+    if (!product) return notFound(res, "Product not found");
     const detail = new OrderDetail({
       orderId,
       productId,
@@ -26,9 +33,9 @@ export const createOrderDetail = async (req, res) => {
     // update total order
     order.totalAmount = (order.totalAmount || 0) + quantity * price;
     await order.save();
-    res.status(201).json(saved);
+    return createdResponse(res, saved, "Order detail created successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -38,9 +45,9 @@ export const getAllOrderDetails = async (req, res) => {
     const list = await OrderDetail.find()
       .populate("orderId")
       .populate("productId");
-    res.json(list);
+    return successResponse(res, list, "Order details fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -51,11 +58,11 @@ export const getOrderDetailById = async (req, res) => {
       .populate("orderId")
       .populate("productId");
     if (!item) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Order detail not found");
     }
-    res.json(item);
+    return successResponse(res, item, "Order detail fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -64,7 +71,7 @@ export const updateOrderDetail = async (req, res) => {
   try {
     const oldDetail = await OrderDetail.findById(req.params.id);
     if (!oldDetail) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Order detail not found");
     }
     const updated = await OrderDetail.findByIdAndUpdate(
       req.params.id,
@@ -80,9 +87,9 @@ export const updateOrderDetail = async (req, res) => {
     }
     order.totalAmount = total;
     await order.save();
-    res.json(updated);
+    return successResponse(res, updated, "Order detail updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -91,7 +98,7 @@ export const deleteOrderDetail = async (req, res) => {
   try {
     const detail = await OrderDetail.findById(req.params.id);
     if (!detail) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Order detail not found");
     }
     // xoá production task liên quan
     await ProductionTask.deleteMany({ orderDetailId: detail._id });
@@ -105,8 +112,8 @@ export const deleteOrderDetail = async (req, res) => {
     }
     order.totalAmount = total;
     await order.save();
-    res.json({ message: "Deleted successfully" });
+    return successResponse(res, null, "Order detail deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };

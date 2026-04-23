@@ -5,6 +5,13 @@ import Payment from "../models/Payment.js";
 import Customer from "../models/Customer.js";
 
 import { generateOrderCode } from "../utils/generateOrderCode.js";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 /* =========================
    CREATE FULL ORDER
@@ -14,16 +21,12 @@ export const createFullOrder = async (req, res) => {
     const { customerId, products, payment, note } = req.body;
 
     if (!customerId || !Array.isArray(products) || products.length === 0) {
-      return res.status(400).json({
-        message: "Missing required data",
-      });
+      return badRequest(res, "Missing required data");
     }
 
     const customer = await Customer.findById(customerId);
     if (!customer) {
-      return res.status(404).json({
-        message: "Customer not found",
-      });
+      return notFound(res, "Customer not found");
     }
 
     const orderCode = await generateOrderCode();
@@ -43,35 +46,48 @@ export const createFullOrder = async (req, res) => {
       if (!item.productId || item.quantity == null || item.price == null) {
         await Order.findByIdAndDelete(order._id);
 
-        return res.status(400).json({
-          message: "Invalid product data",
-        });
+        return badRequest(res, "Invalid product data");
       }
+
+      const itemTotal = item.quantity * item.price;
 
       const detail = await new OrderDetail({
         orderId: order._id,
         productId: item.productId,
         quantity: item.quantity,
         price: item.price,
+        totalPrice: itemTotal,
       }).save();
 
-      totalAmount += item.quantity * item.price;
+      totalAmount += itemTotal;
 
       if (item.source === "production") {
         await new ProductionTask({
           type: "order",
           orderId: order._id,
           orderDetailId: detail._id,
-          productId: item.productId, // ✅ FIX QUAN TRỌNG
-          quantity: item.quantity, // ✅ FIX QUAN TRỌNG
+          productId: item.productId,
+          quantity: item.quantity,
           batch: 1,
           status: "pending",
         }).save();
       }
     }
 
-    order.totalAmount = totalAmount;
-    await order.save();
+    // ✅ Tính toán chi tiết
+    const subtotal = totalAmount;
+    const vatAmount = subtotal * 0.1;
+    const total = subtotal + vatAmount;
+
+    const depositAmount = payment?.amount || 0;
+    const remainingAmount = total - depositAmount;
+
+    order.subtotal = subtotal;
+    order.vat = 0.1; // 10%
+    order.vatAmount = vatAmount;
+    order.totalAmount = total;
+    order.depositAmount = depositAmount;
+    order.remainingAmount = remainingAmount;
 
     let savedPayment = null;
 
@@ -85,20 +101,19 @@ export const createFullOrder = async (req, res) => {
       }).save();
     }
 
-    return res.status(201).json({
-      message: "Order created successfully",
+    return createdResponse(res, {
       orderId: order._id,
       orderCode,
-      totalAmount,
+      subtotal: order.subtotal,
+      vatAmount: order.vatAmount,
+      totalAmount: order.totalAmount,
+      depositAmount: order.depositAmount,
+      remainingAmount: order.remainingAmount,
       payment: savedPayment,
-    });
+    }, "Order created successfully");
   } catch (error) {
     console.error("CREATE ORDER ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -111,11 +126,9 @@ export const getAllOrders = async (req, res) => {
       .populate("customerId")
       .sort({ createdAt: -1 });
 
-    return res.json(orders);
+    return successResponse(res, orders, "Orders fetched successfully");
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -127,28 +140,18 @@ export const getOrderById = async (req, res) => {
     const order = await Order.findById(req.params.id).populate("customerId");
 
     if (!order) {
-      return res.status(404).json({
-        message: "Order not found",
-      });
+      return notFound(res, "Order not found");
     }
 
-    const details = await OrderDetail.find({
-      orderId: order._id,
-    }).populate("productId");
+    // ✅ Chạy song song để tối ưu
+    const [details, payment] = await Promise.all([
+      OrderDetail.find({ orderId: order._id }).populate("productId"),
+      Payment.findOne({ orderId: order._id }),
+    ]);
 
-    const payment = await Payment.findOne({
-      orderId: order._id,
-    });
-
-    return res.json({
-      order,
-      details,
-      payment,
-    });
+    return successResponse(res, { order, details, payment }, "Order fetched successfully");
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -170,18 +173,14 @@ export const updateOrder = async (req, res) => {
     ];
 
     if (!status || !validStatus.includes(status)) {
-      return res.status(400).json({
-        message: "Invalid status",
-      });
+      return badRequest(res, "Invalid status");
     }
 
     // tìm order
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return res.status(404).json({
-        message: "Order not found",
-      });
+      return notFound(res, "Order not found");
     }
 
     // ✅ flow chuẩn
@@ -198,9 +197,7 @@ export const updateOrder = async (req, res) => {
 
     // ❌ không cho quay ngược (trừ cancel)
     if (status !== "cancelled" && newIndex < currentIndex) {
-      return res.status(400).json({
-        message: "Không thể quay lại trạng thái trước",
-      });
+      return badRequest(res, "Không thể quay lại trạng thái trước");
     }
 
     // ❌ không cho completed nếu chưa thanh toán
@@ -208,9 +205,7 @@ export const updateOrder = async (req, res) => {
       const payment = await Payment.findOne({ orderId: order._id });
 
       if (!payment) {
-        return res.status(400).json({
-          message: "Chưa thanh toán, không thể hoàn thành",
-        });
+        return badRequest(res, "Chưa thanh toán, không thể hoàn thành");
       }
     }
 
@@ -223,16 +218,10 @@ export const updateOrder = async (req, res) => {
 
     await order.save();
 
-    return res.json({
-      message: "Cập nhật trạng thái thành công",
-      order,
-    });
+    return successResponse(res, { order }, "Cập nhật trạng thái thành công");
   } catch (error) {
     console.error("UPDATE ORDER ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -244,9 +233,7 @@ export const deleteOrder = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return res.status(404).json({
-        message: "Order not found",
-      });
+      return notFound(res, "Order not found");
     }
 
     const details = await OrderDetail.find({
@@ -263,12 +250,8 @@ export const deleteOrder = async (req, res) => {
     await Payment.deleteMany({ orderId: order._id });
     await Order.findByIdAndDelete(order._id);
 
-    return res.json({
-      message: "Order deleted successfully",
-    });
+    return successResponse(res, null, "Order deleted successfully");
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };

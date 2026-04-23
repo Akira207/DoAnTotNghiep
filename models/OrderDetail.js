@@ -12,6 +12,10 @@ const orderDetailSchema = new mongoose.Schema(
     },
     quantity: Number,
     price: Number,
+    totalPrice: {
+      type: Number,
+      default: 0,
+    },
     note: String,
   },
   { timestamps: true },

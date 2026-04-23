@@ -1,5 +1,12 @@
 import Payment from "../models/Payment.js";
 import Order from "../models/Order.js";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 // CREATE PAYMENT
 export const createPayment = async (req, res) => {
@@ -7,11 +14,11 @@ export const createPayment = async (req, res) => {
     const { orderId, amount, paymentMethod, status } = req.body;
     // validate
     if (!orderId || !amount || !paymentMethod) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return badRequest(res, "Missing required fields");
     }
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return notFound(res, "Order not found");
     }
     const payment = new Payment({
       orderId,
@@ -26,9 +33,9 @@ export const createPayment = async (req, res) => {
       order.status = "paid";
       await order.save();
     }
-    res.status(201).json(saved);
+    return createdResponse(res, saved, "Payment created successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -36,9 +43,9 @@ export const createPayment = async (req, res) => {
 export const getAllPayments = async (req, res) => {
   try {
     const payments = await Payment.find().populate("orderId");
-    res.json(payments);
+    return successResponse(res, payments, "Payments fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -47,11 +54,11 @@ export const getPaymentById = async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.id).populate("orderId");
     if (!payment) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Payment not found");
     }
-    res.json(payment);
+    return successResponse(res, payment, "Payment fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -62,7 +69,7 @@ export const updatePayment = async (req, res) => {
       new: true,
     });
     if (!updated) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Payment not found");
     }
     // update lại trạng thái order nếu cần
     const order = await Order.findById(updated.orderId);
@@ -72,9 +79,9 @@ export const updatePayment = async (req, res) => {
       order.status = "created";
     }
     await order.save();
-    res.json(updated);
+    return successResponse(res, updated, "Payment updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -83,7 +90,7 @@ export const deletePayment = async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.id);
     if (!payment) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Payment not found");
     }
     await Payment.findByIdAndDelete(req.params.id);
     // cập nhật lại order
@@ -99,8 +106,8 @@ export const deletePayment = async (req, res) => {
       order.status = "created";
     }
     await order.save();
-    res.json({ message: "Deleted successfully" });
+    return successResponse(res, null, "Payment deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };

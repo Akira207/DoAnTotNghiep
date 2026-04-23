@@ -1,6 +1,13 @@
 import ProductionTask from "../models/ProductionTask.js";
 import User from "../models/User.js";
 import OrderDetail from "../models/OrderDetail.js";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 /* =========================
    CREATE PRODUCTION TASK
@@ -21,9 +28,7 @@ export const createProductionTask = async (req, res) => {
     } = req.body;
 
     if (!productId && !orderDetailId) {
-      return res.status(400).json({
-        message: "productId or orderDetailId is required",
-      });
+      return badRequest(res, "productId or orderDetailId is required");
     }
 
     let finalProductId = productId;
@@ -35,9 +40,7 @@ export const createProductionTask = async (req, res) => {
       );
 
       if (!orderDetail) {
-        return res.status(404).json({
-          message: "OrderDetail not found",
-        });
+        return notFound(res, "OrderDetail not found");
       }
 
       finalProductId = orderDetail.productId?._id;
@@ -48,9 +51,7 @@ export const createProductionTask = async (req, res) => {
     if (workerId) {
       worker = await User.findById(workerId);
       if (!worker) {
-        return res.status(404).json({
-          message: "Worker not found",
-        });
+        return notFound(res, "Worker not found");
       }
     }
 
@@ -78,12 +79,10 @@ export const createProductionTask = async (req, res) => {
       })
       .populate("workerId", "username role");
 
-    return res.status(201).json(result);
+    return createdResponse(res, result, "Production task created successfully");
   } catch (error) {
     console.error("CREATE TASK ERROR:", error);
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -117,12 +116,10 @@ export const getAllProductionTasks = async (req, res) => {
       };
     });
 
-    return res.json(result);
+    return successResponse(res, result, "Production tasks fetched successfully");
   } catch (error) {
     console.error("GET TASKS ERROR:", error);
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -140,20 +137,18 @@ export const getProductionTaskById = async (req, res) => {
       .populate("workerId", "username role");
 
     if (!task) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Production task not found");
     }
 
     const product =
       task.productId || task.orderDetailId?.productId || null;
 
-    return res.json({
+    return successResponse(res, {
       ...task.toObject(),
       product,
-    });
+    }, "Production task fetched successfully");
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -167,9 +162,7 @@ export const updateProductionTask = async (req, res) => {
     const allowedStatus = ["pending", "in-progress", "completed"];
 
     if (status && !allowedStatus.includes(status)) {
-      return res.status(400).json({
-        message: "Invalid status",
-      });
+      return badRequest(res, "Invalid status");
     }
 
     const updated = await ProductionTask.findByIdAndUpdate(
@@ -191,20 +184,18 @@ export const updateProductionTask = async (req, res) => {
       .populate("workerId", "username role");
 
     if (!updated) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Production task not found");
     }
 
     const product =
       updated.productId || updated.orderDetailId?.productId || null;
 
-    return res.json({
+    return successResponse(res, {
       ...updated.toObject(),
       product,
-    });
+    }, "Production task updated successfully");
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -216,13 +207,11 @@ export const deleteProductionTask = async (req, res) => {
     const deleted = await ProductionTask.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Not found" });
+      return notFound(res, "Production task not found");
     }
 
-    return res.json({ message: "Deleted successfully" });
+    return successResponse(res, null, "Production task deleted successfully");
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return errorResponse(res, 500, error.message);
   }
 };

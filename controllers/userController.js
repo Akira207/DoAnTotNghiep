@@ -1,5 +1,12 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import {
+  successResponse,
+  createdResponse,
+  badRequest,
+  notFound,
+  errorResponse,
+} from "../utils/apiResponse.js";
 
 /* ================= CREATE USER ================= */
 export const createUser = async (req, res) => {
@@ -7,12 +14,12 @@ export const createUser = async (req, res) => {
     const { username, password, role, phone, name, email, address } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return badRequest(res, "Missing required fields");
     }
 
     const existUser = await User.findOne({ username });
     if (existUser) {
-      return res.status(400).json({ message: "Username already exists" });
+      return badRequest(res, "Username already exists");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -29,9 +36,9 @@ export const createUser = async (req, res) => {
 
     const { password: _, ...userData } = user._doc;
 
-    res.status(201).json(userData);
+    return createdResponse(res, userData, "User created successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -40,12 +47,9 @@ export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
 
-    res.json({
-      success: true,
-      data: users,
-    });
+    return successResponse(res, users, "Users fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -55,15 +59,12 @@ export const getUserById = async (req, res) => {
     const user = await User.findById(req.params.id).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return notFound(res, "User not found");
     }
 
-    res.json({
-      success: true,
-      data: user,
-    });
+    return successResponse(res, user, "User fetched successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -94,15 +95,12 @@ export const updateUser = async (req, res) => {
     ).select("-password");
 
     if (!updated) {
-      return res.status(404).json({ message: "User not found" });
+      return notFound(res, "User not found");
     }
 
-    res.json({
-      success: true,
-      data: updated,
-    });
+    return successResponse(res, updated, "User updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
 
@@ -112,14 +110,11 @@ export const deleteUser = async (req, res) => {
     const deleted = await User.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "User not found" });
+      return notFound(res, "User not found");
     }
 
-    res.json({
-      success: true,
-      message: "Deleted successfully",
-    });
+    return successResponse(res, null, "User deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, 500, error.message);
   }
 };
