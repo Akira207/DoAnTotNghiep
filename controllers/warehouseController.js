@@ -21,7 +21,17 @@ export const createWarehouse = async (req, res) => {
 export const getAllWarehouse = async (req, res) => {
   try {
     const data = await Warehouse.find().populate("productId");
-    return successResponse(res, data, "Warehouses fetched successfully");
+
+    const result = data.map((item) => {
+      const product = item.productId || null;
+
+      return {
+        ...item.toObject(),
+        product,
+      };
+    });
+
+    return successResponse(res, result, "Warehouses fetched successfully");
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }

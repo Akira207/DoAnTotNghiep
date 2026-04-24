@@ -1,6 +1,7 @@
 import ProductionTask from "../models/ProductionTask.js";
 import User from "../models/User.js";
 import OrderDetail from "../models/OrderDetail.js";
+import Warehouse from "../models/WareHouse.js";
 import {
   successResponse,
   createdResponse,
@@ -35,9 +36,8 @@ export const createProductionTask = async (req, res) => {
 
     // nếu tạo từ đơn hàng → lấy product từ orderDetail
     if (!finalProductId && orderDetailId) {
-      const orderDetail = await OrderDetail.findById(orderDetailId).populate(
-        "productId"
-      );
+      const orderDetail =
+        await OrderDetail.findById(orderDetailId).populate("productId");
 
       if (!orderDetail) {
         return notFound(res, "OrderDetail not found");
@@ -107,8 +107,7 @@ export const getAllProductionTasks = async (req, res) => {
 
     // 🔥 NORMALIZE DATA (QUAN TRỌNG NHẤT)
     const result = tasks.map((task) => {
-      const product =
-        task.productId || task.orderDetailId?.productId || null;
+      const product = task.productId || task.orderDetailId?.productId || null;
 
       return {
         ...task.toObject(),
@@ -116,7 +115,11 @@ export const getAllProductionTasks = async (req, res) => {
       };
     });
 
-    return successResponse(res, result, "Production tasks fetched successfully");
+    return successResponse(
+      res,
+      result,
+      "Production tasks fetched successfully",
+    );
   } catch (error) {
     console.error("GET TASKS ERROR:", error);
     return errorResponse(res, 500, error.message);
@@ -140,20 +143,23 @@ export const getProductionTaskById = async (req, res) => {
       return notFound(res, "Production task not found");
     }
 
-    const product =
-      task.productId || task.orderDetailId?.productId || null;
+    const product = task.productId || task.orderDetailId?.productId || null;
 
-    return successResponse(res, {
-      ...task.toObject(),
-      product,
-    }, "Production task fetched successfully");
+    return successResponse(
+      res,
+      {
+        ...task.toObject(),
+        product,
+      },
+      "Production task fetched successfully",
+    );
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }
 };
 
 /* =========================
-   UPDATE TASK
+   UPDATE TASK (FIX)
 ========================= */
 export const updateProductionTask = async (req, res) => {
   try {
@@ -164,6 +170,8 @@ export const updateProductionTask = async (req, res) => {
     if (status && !allowedStatus.includes(status)) {
       return badRequest(res, "Invalid status");
     }
+
+    const oldTask = await ProductionTask.findById(req.params.id);
 
     const updated = await ProductionTask.findByIdAndUpdate(
       req.params.id,
@@ -180,11 +188,28 @@ export const updateProductionTask = async (req, res) => {
       .populate({
         path: "orderDetailId",
         populate: { path: "productId" },
-      })
-      .populate("workerId", "username role");
+      });
 
     if (!updated) {
       return notFound(res, "Production task not found");
+    }
+
+    // 🔥 AUTO ADD TO WAREHOUSE
+    if (status === "completed" && oldTask.status !== "completed") {
+      const existing = await Warehouse.findOne({
+        productId: updated.productId,
+      });
+
+      if (existing) {
+        existing.quantity += updated.quantity;
+        await existing.save();
+      } else {
+        await Warehouse.create({
+          productId: updated.productId,
+          quantity: updated.quantity,
+          location: "Kho chính",
+        });
+      }
     }
 
     const product =
@@ -193,12 +218,11 @@ export const updateProductionTask = async (req, res) => {
     return successResponse(res, {
       ...updated.toObject(),
       product,
-    }, "Production task updated successfully");
+    });
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }
 };
-
 /* =========================
    DELETE TASK
 ========================= */
