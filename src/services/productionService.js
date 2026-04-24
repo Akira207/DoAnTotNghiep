@@ -2,7 +2,6 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api/production-tasks";
 
-// ✅ Helper to extract data from API response
 const getResponseData = (response) => response.data || response;
 
 // GET ALL TASKS

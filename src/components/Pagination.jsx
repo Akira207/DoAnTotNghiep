@@ -1,5 +1,6 @@
-import { useState } from "react";
-import useDebounce from "../../hooks/useDebounce";
+import { useState, useMemo } from "react";
+import useDebounce from "../hooks/useDebounce";
+import Pagination from "../components/Pagination";
 
 const statusMap = {
   in_stock: {
@@ -31,17 +32,55 @@ const getStatus = (quantity, itemStatus) => {
     );
   }
 
-  if (quantity < 10) {
-    return statusMap.low_stock;
-  }
+  if (quantity < 10) return statusMap.low_stock;
   return statusMap.in_stock;
 };
 
-export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
-  const [data] = useState(items);
+export default function WarehouseTable({ items = [], onRefresh }) {
+  // =========================
+  // STATE
+  // =========================
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
-  if (!data.length) {
+
+  const [page, setPage] = useState(1);
+  const limit = 5;
+
+  // =========================
+  // FILTER (SEARCH)
+  // =========================
+  const filteredData = useMemo(() => {
+    return items.filter((item) => {
+      const product = item.productId;
+
+      const name = product?.name || "";
+      const category = product?.category || "";
+
+      const keyword = debouncedSearch.toLowerCase();
+
+      return (
+        name.toLowerCase().includes(keyword) ||
+        category.toLowerCase().includes(keyword)
+      );
+    });
+  }, [items, debouncedSearch]);
+
+  // =========================
+  // PAGINATION
+  // =========================
+  const total = filteredData.length;
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filteredData.slice(start, start + limit);
+  }, [filteredData, page]);
+
+  // reset page khi search
+  useMemo(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  if (!items.length) {
     return (
       <section className="bg-surface-container-lowest rounded-xl shadow-sm p-8 text-center">
         <p className="text-on-surface-variant">Chưa có dữ liệu kho hàng</p>
@@ -49,33 +88,27 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
     );
   }
 
-  const filteredData = items.filter((item) => {
-    const product = item.productId || item.product || {};
-
-    const keyword = debouncedSearch.toLowerCase();
-
-    return (
-      product.name?.toLowerCase().includes(keyword) ||
-      product.category?.toLowerCase().includes(keyword)
-    );
-  });
   return (
     <section className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
-      {/* Header */}
+      
+      {/* HEADER */}
       <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-surface-container sm:flex-wrap">
         <h3 className="text-lg font-bold text-on-surface">
           Danh sách Thành phẩm
         </h3>
 
         <div className="flex items-center gap-2 flex-1 justify-end">
+          
+          {/* CREATE */}
           <button
-            onClick={onCreate}
+            onClick={onRefresh}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dim rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
             <span>Nhập kho mới</span>
           </button>
 
+          {/* SEARCH */}
           <div className="relative w-64 group">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">
               search
@@ -96,12 +129,14 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
           <button className="p-2 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
             <span className="material-symbols-outlined">sort</span>
           </button>
+
         </div>
       </div>
 
-      {/* Table */}
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
+          
           <thead className="bg-surface-container-low text-xs font-bold uppercase tracking-wider text-on-surface-variant">
             <tr>
               <th className="px-6 py-4">Sản phẩm</th>
@@ -114,18 +149,15 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
           </thead>
 
           <tbody className="divide-y divide-surface-container">
-            {filteredData.map((item) => {
+            {paginatedData.map((item) => {
+              const product = item.productId;
+              const image = product?.images?.[0];
+
               const status = getStatus(item.quantity, item.status);
-
-              // 🔥 FIX QUAN TRỌNG
-              const product = item.productId || item.product || null;
-
-              const image =
-                product?.image || product?.thumbnail || product?.images?.[0];
 
               return (
                 <tr
-                  key={item._id || item.id}
+                  key={item._id}
                   className="hover:bg-surface-container-low/50 transition-colors group"
                 >
                   <td className="px-6 py-4">
@@ -133,7 +165,6 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
                       <div className="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
                         <img
                           src={image || "https://via.placeholder.com/48"}
-                          alt="Sản phẩm"
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -149,81 +180,46 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
                   </td>
 
                   <td className="px-6 py-4 font-mono text-xs font-semibold text-outline">
-                    {item.sku || item._id?.substring(0, 6) || "N/A"}
+                    {item._id?.substring(0, 6)}
                   </td>
 
-                  <td
-                    className={`px-6 py-4 font-bold text-sm ${
-                      item.quantity < 10 ? "text-error" : ""
-                    }`}
-                  >
-                    {item.quantity || 0}
+                  <td className="px-6 py-4 font-bold text-sm">
+                    {item.quantity}
                   </td>
 
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-xs font-medium bg-surface-container-high px-2 py-1 rounded w-fit">
-                      <span className="material-symbols-outlined text-[14px]">
-                        grid_view
-                      </span>
+                    <div className="text-xs font-medium bg-surface-container-high px-2 py-1 rounded w-fit">
                       Kho chính
                     </div>
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${status.className}`}
-                    >
+                    <span className={`px-2 py-1 rounded ${status.className}`}>
                       {status.label}
                     </span>
                   </td>
 
                   <td className="px-6 py-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
+                    <button className="p-1">
                       <span className="material-symbols-outlined">edit</span>
-                    </button>
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
-                      <span className="material-symbols-outlined">
-                        more_vert
-                      </span>
                     </button>
                   </td>
                 </tr>
               );
             })}
           </tbody>
+
         </table>
       </div>
 
-      {/* Pagination giữ nguyên */}
-      <div className="px-6 py-4 flex items-center justify-between border-t border-surface-container">
-        <p className="text-xs text-on-surface-variant font-medium">
-          Hiển thị 1 - {data.length} trên 256 sản phẩm
-        </p>
+      {/* PAGINATION */}
+      <Pagination
+        page={page}
+        total={total}
+        limit={limit}
+        onPageChange={setPage}
+      />
 
-        <div className="flex items-center gap-1">
-          <button className="p-1 rounded hover:bg-surface-container transition-colors disabled:opacity-50">
-            <span className="material-symbols-outlined">chevron_left</span>
-          </button>
-
-          <button className="w-8 h-8 flex items-center justify-center text-xs font-bold bg-primary text-white rounded">
-            1
-          </button>
-
-          <button className="w-8 h-8 flex items-center justify-center text-xs font-medium text-on-surface-variant hover:bg-surface-container rounded">
-            2
-          </button>
-
-          <button className="w-8 h-8 flex items-center justify-center text-xs font-medium text-on-surface-variant hover:bg-surface-container rounded">
-            3
-          </button>
-
-          <span className="px-2 text-on-surface-variant">...</span>
-
-          <button className="p-1 rounded hover:bg-surface-container transition-colors">
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-      </div>
     </section>
   );
 }

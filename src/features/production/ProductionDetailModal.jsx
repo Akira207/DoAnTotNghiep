@@ -9,12 +9,7 @@ const STATUS_LABEL = {
   completed: "Hoàn thành",
 };
 
-const ProductionDetailModal = ({
-  isOpen,
-  onClose,
-  item,
-  onUpdated,
-}) => {
+const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
   const [editMode, setEditMode] = useState(false);
   const [localStatus, setLocalStatus] = useState(item?.status);
 
@@ -25,13 +20,10 @@ const ProductionDetailModal = ({
 
   if (!isOpen || !item) return null;
 
-  const product = item.orderDetailId?.productId;
+  const product = item.product || null;
 
   const image =
-    product?.image ||
-    product?.thumbnail ||
-    product?.images?.[0] ||
-    null;
+    product?.image || product?.thumbnail || product?.images?.[0] || null;
 
   // =========================
   // CYCLE STATUS
@@ -51,7 +43,7 @@ const ProductionDetailModal = ({
     try {
       await axios.put(
         `http://localhost:5000/api/production-tasks/${item._id}`,
-        { status: localStatus }
+        { status: localStatus },
       );
 
       setEditMode(false);
@@ -61,7 +53,6 @@ const ProductionDetailModal = ({
 
       // close modal
       onClose?.();
-
     } catch (err) {
       console.error(err);
     }
@@ -69,12 +60,9 @@ const ProductionDetailModal = ({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
-
       <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-sm shadow-2xl flex flex-col overflow-hidden">
-
         {/* HEADER */}
         <div className="flex justify-between items-center px-8 py-6 border-b border-slate-200">
-
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-6 bg-[#007BFF]"></div>
             <h2 className="text-xl font-bold">
@@ -85,14 +73,11 @@ const ProductionDetailModal = ({
           <button onClick={onClose}>
             <span className="material-symbols-outlined">close</span>
           </button>
-
         </div>
 
         {/* CONTENT */}
         <div className="flex-1 overflow-y-auto p-8">
-
           <div className="grid grid-cols-12 gap-8">
-
             {/* IMAGE */}
             <div className="col-span-12 lg:col-span-5">
               <div className="aspect-square bg-slate-100 rounded-sm overflow-hidden">
@@ -108,13 +93,9 @@ const ProductionDetailModal = ({
 
             {/* INFO */}
             <div className="col-span-12 lg:col-span-7 space-y-6">
-
               {/* STATUS */}
               <div className="p-4 bg-slate-50 border-l-2 border-blue-500">
-
-                <p className="text-xs font-bold text-slate-500">
-                  Trạng thái
-                </p>
+                <p className="text-xs font-bold text-slate-500">Trạng thái</p>
 
                 <p
                   onClick={handleCycleStatus}
@@ -123,17 +104,13 @@ const ProductionDetailModal = ({
                   <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                   {STATUS_LABEL[localStatus]}
                 </p>
-
               </div>
 
               {/* INFO */}
               <div className="space-y-4">
-
                 <div className="flex justify-between border-b py-2">
                   <span>Kích thước</span>
-                  <span className="font-bold">
-                    {product?.size || "N/A"}
-                  </span>
+                  <span className="font-bold">{product?.size || "N/A"}</span>
                 </div>
 
                 <div className="flex justify-between border-b py-2">
@@ -149,21 +126,14 @@ const ProductionDetailModal = ({
                     {item.orderDetailId?.quantity || 0}
                   </span>
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
 
         {/* FOOTER */}
         <div className="px-8 py-6 bg-slate-50 flex justify-between items-center">
-
-          <button onClick={onClose}>
-            Đóng
-          </button>
+          <button onClick={onClose}>Đóng</button>
 
           {!editMode ? (
             <button
@@ -174,7 +144,6 @@ const ProductionDetailModal = ({
             </button>
           ) : (
             <div className="flex gap-3">
-
               <button
                 onClick={() => {
                   setEditMode(false);
@@ -190,12 +159,9 @@ const ProductionDetailModal = ({
               >
                 Lưu
               </button>
-
             </div>
           )}
-
         </div>
-
       </div>
     </div>
   );

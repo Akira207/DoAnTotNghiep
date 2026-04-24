@@ -7,7 +7,7 @@ import ProductionHeader from "../features/production/ProductionHeader";
 import ProductionFilters from "../features/production/ProductionFilters";
 import ProductionSummary from "../features/production/ProductionSummary";
 import ProductionGrid from "../features/production/ProductionGrid";
-import Pagination from "../features/production/Pagination";
+import Pagination from "../components/Pagination";
 
 import ProductionDetailModal from "../features/production/ProductionDetailModal";
 import ProductionCreateModal from "../features/production/ProductionCreateModal";

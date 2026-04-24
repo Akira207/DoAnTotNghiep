@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
+import { getAllProducts } from "../../services/productService";
 import axios from "axios";
-
-const API = "http://localhost:5000/api";
 
 const ProductionCreateModal = ({ isOpen, onClose, onCreated }) => {
   const [products, setProducts] = useState([]);
-
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [form, setForm] = useState({
@@ -13,20 +11,22 @@ const ProductionCreateModal = ({ isOpen, onClose, onCreated }) => {
     quantity: 1,
     batch: 1,
     note: "",
+    width: "",
+    height: "",
+    depth: "",
+    material: "",
   });
 
-  // =========================
-  // FETCH PRODUCT LIST
-  // =========================
+  // ================= FETCH PRODUCTS =================
   useEffect(() => {
     if (!isOpen) return;
 
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${API}/products`);
-        setProducts(res.data || []);
+        const data = await getAllProducts();
+        setProducts(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Load products error:", err);
+        console.error(err);
       }
     };
 
@@ -35,47 +35,39 @@ const ProductionCreateModal = ({ isOpen, onClose, onCreated }) => {
 
   if (!isOpen) return null;
 
-  // =========================
-  // HANDLE SELECT PRODUCT
-  // =========================
+  // ================= SELECT PRODUCT =================
   const handleSelectProduct = (e) => {
     const id = e.target.value;
 
-    const product = products.find((p) => p._id === id);
+    const product = products.find((p) => String(p._id || p.id) === String(id));
 
     setSelectedProduct(product || null);
 
     setForm((prev) => ({
       ...prev,
       productId: id,
+      width: product?.width || "",
+      height: product?.height || "",
+      depth: product?.depth || "",
+      material: product?.material || "",
     }));
   };
 
-  // =========================
-  // SUBMIT
-  // =========================
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await axios.post(`${API}/production-tasks`, {
-        productId: form.productId,
-        quantity: form.quantity,
-        batch: form.batch,
-        note: form.note,
-      });
+      await axios.post("http://localhost:5000/api/production-tasks", form);
 
-      onCreated?.(); // reload list
+      onCreated?.();
       onClose();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const image =
-    selectedProduct?.image ||
-    selectedProduct?.thumbnail ||
-    selectedProduct?.images?.[0];
+  const image = selectedProduct?.image || selectedProduct?.images?.[0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -86,141 +78,145 @@ const ProductionCreateModal = ({ isOpen, onClose, onCreated }) => {
       />
 
       {/* modal */}
-      <div className="relative bg-white w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden flex animate-in fade-in zoom-in duration-300">
-        <div className="flex-1 p-8">
+      <div className="relative bg-white w-full max-w-5xl rounded-lg shadow-2xl overflow-hidden p-8">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-2 gap-x-8 gap-y-6"
+        >
+          {/* LEFT */}
+          <div className="col-span-2 md:col-span-1 space-y-4">
+            {/* PRODUCT */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Tên Sản phẩm
+              </label>
 
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-black text-slate-900">
-              Tạo Lệnh Sản xuất Mới
-            </h2>
-
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-900">
-              ✕
-            </button>
-          </div>
-
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-8 gap-y-6">
-
-            {/* LEFT */}
-            <div className="col-span-2 md:col-span-1 space-y-4">
-
-              {/* PRODUCT SELECT */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">
-                  Tên sản phẩm
-                </label>
-
+              <div className="relative">
                 <select
                   value={form.productId}
                   onChange={handleSelectProduct}
-                  className="w-full bg-slate-50 py-3 px-4 rounded-sm font-medium"
+                  className="w-full bg-surface-container-low py-3 px-4 rounded-sm appearance-none font-medium"
                 >
                   <option value="">Chọn sản phẩm...</option>
 
-                  {products.map((p) => (
-                    <option key={p._id} value={p._id}>
+                  {(Array.isArray(products) ? products : []).map((p) => (
+                    <option key={p._id || p.id} value={p._id || p.id}>
                       {p.name}
                     </option>
                   ))}
                 </select>
               </div>
-
-              {/* QUANTITY + BATCH */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase">
-                    Số lượng
-                  </label>
-
-                  <input
-                    type="number"
-                    value={form.quantity}
-                    onChange={(e) =>
-                      setForm({ ...form, quantity: e.target.value })
-                    }
-                    className="w-full bg-slate-50 py-3 px-4 rounded-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase">
-                    Số đợt
-                  </label>
-
-                  <input
-                    type="number"
-                    value={form.batch}
-                    onChange={(e) =>
-                      setForm({ ...form, batch: e.target.value })
-                    }
-                    className="w-full bg-slate-50 py-3 px-4 rounded-sm"
-                  />
-                </div>
-              </div>
-
             </div>
 
-            {/* RIGHT */}
-            <div className="col-span-2 md:col-span-1 space-y-6 flex flex-col">
+            {/* QUANTITY + BATCH */}
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="number"
+                value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                className="bg-surface-container-low py-3 px-4 rounded-sm"
+                placeholder="Số lượng"
+              />
 
-              {/* IMAGE PREVIEW */}
-              <div className="aspect-video bg-slate-100 rounded-sm overflow-hidden">
-                {image ? (
-                  <img src={image} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-slate-400">
-                    Chưa chọn sản phẩm
-                  </div>
-                )}
-              </div>
-
-              {/* AUTO INFO */}
-              <div className="text-sm space-y-1">
-                <p>
-                  <b>Kích thước:</b>{" "}
-                  {selectedProduct?.size || "—"}
-                </p>
-                <p>
-                  <b>Vật liệu:</b>{" "}
-                  {selectedProduct?.material || "—"}
-                </p>
-              </div>
-
-              {/* NOTE */}
-              <textarea
-                value={form.note}
-                onChange={(e) =>
-                  setForm({ ...form, note: e.target.value })
-                }
-                className="w-full bg-slate-50 p-3 rounded-sm flex-1"
-                placeholder="Ghi chú..."
+              <input
+                type="number"
+                value={form.batch}
+                onChange={(e) => setForm({ ...form, batch: e.target.value })}
+                className="bg-surface-container-low py-3 px-4 rounded-sm"
+                placeholder="Số đợt"
               />
             </div>
 
-            {/* FOOTER */}
-            <div className="col-span-2 flex justify-end gap-4 pt-4 border-t">
+            {/* SIZE */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">
+                Kích thước kỹ thuật
+              </label>
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-2 text-slate-500"
-              >
-                Huỷ
-              </button>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">
+                    Cao (H)
+                  </span>
+                  <input
+                    value={form.height}
+                    readOnly
+                    title="Chiều cao sản phẩm"
+                    className="w-full bg-slate-100 py-3 px-4 rounded-sm text-sm"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                className="px-8 py-2 bg-blue-600 text-white rounded-sm"
-              >
-                Tạo lệnh
-              </button>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">
+                    Ngang (W)
+                  </span>
+                  <input
+                    value={form.width}
+                    readOnly
+                    title="Chiều ngang sản phẩm"
+                    className="w-full bg-slate-100 py-3 px-4 rounded-sm text-sm"
+                  />
+                </div>
 
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">
+                    Sâu (D)
+                  </span>
+                  <input
+                    value={form.depth}
+                    readOnly
+                    title="Chiều sâu sản phẩm"
+                    className="w-full bg-slate-100 py-3 px-4 rounded-sm text-sm"
+                  />
+                </div>
+              </div>
             </div>
 
-          </form>
-        </div>
+            {/* MATERIAL */}
+            <span className="text-[10px] text-slate-400 font-bold uppercase">
+                    Vật liệu
+                  </span>
+            <input
+              value={form.material}
+              readOnly
+              className="bg-slate-100 py-3 px-4 rounded-sm"
+              placeholder="Vật liệu"
+            />
+          </div>
+
+          {/* RIGHT */}
+          <div className="col-span-2 md:col-span-1 space-y-6 flex flex-col">
+            {/* IMAGE */}
+            <div className="aspect-video bg-slate-100 rounded-sm overflow-hidden">
+              {image ? (
+                <img src={image} className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-400">
+                  Chưa có ảnh
+                </div>
+              )}
+            </div>
+
+            {/* NOTE */}
+            <textarea
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+              className="w-full bg-surface-container-low p-3 rounded-sm flex-1"
+              placeholder="Ghi chú..."
+            />
+          </div>
+
+          {/* FOOTER */}
+          <div className="col-span-2 flex justify-end gap-4 pt-4 border-t">
+            <button type="button" onClick={onClose}>
+              Huỷ
+            </button>
+
+            <button type="submit" className="bg-blue-600 text-white px-6 py-2">
+              Tạo lệnh
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

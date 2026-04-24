@@ -6,6 +6,7 @@ import WarehouseHeader from "../../features/productsWarehouse/WarehouseHeader";
 import WarehouseStats from "../../features/productsWarehouse/WarehouseStats";
 import WarehouseTable from "../../features/productsWarehouse/WarehouseTable";
 import WarehouseBottomCards from "../../features/productsWarehouse/WarehouseBottomCards";
+import WarehouseCreateModal from "../../features/productsWarehouse/WarehouseCreateModal";
 
 import { getWarehouse } from "../../services/warehouseService";
 
@@ -14,7 +15,7 @@ export default function ProductsWarehousePage() {
   const [warehouseItems, setWarehouseItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
@@ -79,8 +80,16 @@ export default function ProductsWarehousePage() {
               {/* warehouse stats */}
               <WarehouseStats items={warehouseItems} />
 
-              {/* warehouse table */}
-              <WarehouseTable items={warehouseItems} onRefresh={fetchWarehouse} />
+              <WarehouseTable
+                items={warehouseItems}
+                onRefresh={fetchWarehouse}
+                onCreate={() => setIsCreateOpen(true)}
+              />
+              <WarehouseCreateModal
+                isOpen={isCreateOpen}
+                onClose={() => setIsCreateOpen(false)}
+                onCreated={fetchWarehouse}
+              />  
 
               {/* warehouse bottom cards */}
               <WarehouseBottomCards items={warehouseItems} />

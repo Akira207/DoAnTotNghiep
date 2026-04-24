@@ -28,13 +28,8 @@ const statusConfig = {
 const ProductionCard = ({ item, onDetail }) => {
   const config = statusConfig[item.status] || statusConfig.pending;
 
-  // =========================
-  // 🔥 UNIFIED PRODUCT ACCESS
-  // =========================
-  const product =
-    item.productId ||
-    item.orderDetailId?.productId ||
-    null;
+  // ✅ FIX: dùng field đã normalize từ backend
+  const product = item.product || null;
 
   const image =
     product?.image ||
