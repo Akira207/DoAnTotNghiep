@@ -2,6 +2,7 @@ import ProductionTask from "../models/ProductionTask.js";
 import User from "../models/User.js";
 import OrderDetail from "../models/OrderDetail.js";
 import Warehouse from "../models/WareHouse.js";
+import Product from "../models/Product.js";
 import {
   successResponse,
   createdResponse,
@@ -91,10 +92,27 @@ export const createProductionTask = async (req, res) => {
 ========================= */
 export const getAllProductionTasks = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, search } = req.query;
 
     const filter = {};
     if (status) filter.status = status;
+
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+
+      // Tìm tất cả sản phẩm khớp với từ khóa để lấy ID
+      const matchingProducts = await Product.find({
+        name: { $regex: searchRegex }
+      }).select("_id");
+
+      const productIds = matchingProducts.map(p => p._id);
+
+      // Lọc task theo: (ID sản phẩm khớp) HOẶC (ghi chú khớp)
+      filter.$or = [
+        { note: { $regex: searchRegex } },
+        { productId: { $in: productIds } },
+      ];
+    }
 
     const tasks = await ProductionTask.find(filter)
       .sort({ createdAt: -1 })

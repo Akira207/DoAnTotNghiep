@@ -28,12 +28,29 @@ export const createPayment = async (req, res) => {
       status: status || "pending",
     });
     const saved = await payment.save();
-    // nếu thanh toán đủ → update order
-    if (amount >= order.totalAmount) {
-      order.status = "paid";
-      await order.save();
+    console.log("Payment saved successfully:", saved._id);
+
+    // cập nhật trạng thái order nếu thanh toán đủ
+    try {
+      const payments = await Payment.find({ orderId: order._id });
+      const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+      console.log(`Total paid for order ${order._id}: ${totalPaid}, Total amount: ${order.totalAmount}`);
+
+      if (totalPaid >= order.totalAmount) {
+        order.status = "paid";
+        await order.save();
+        console.log("Order status updated to paid");
+      }
+    } catch (updateErr) {
+      console.error("Order status update error:", updateErr);
     }
-    return createdResponse(res, saved, "Payment created successfully");
+
+    console.log("Sending success response for payment creation");
+    return res.status(201).json({
+      success: true,
+      data: saved,
+      message: "Payment created successfully"
+    });
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }

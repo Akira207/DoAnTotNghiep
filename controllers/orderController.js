@@ -3,6 +3,7 @@ import OrderDetail from "../models/OrderDetail.js";
 import ProductionTask from "../models/ProductionTask.js";
 import Payment from "../models/Payment.js";
 import Customer from "../models/Customer.js";
+import Warehouse from "../models/WareHouse.js";
 
 import { generateOrderCode } from "../utils/generateOrderCode.js";
 import {
@@ -18,7 +19,7 @@ import {
 ========================= */
 export const createFullOrder = async (req, res) => {
   try {
-    const { customerId, products, payment, note } = req.body;
+    const { customerId, products, payment, note, discount } = req.body;
 
     if (!customerId || !Array.isArray(products) || products.length === 0) {
       return badRequest(res, "Missing required data");
@@ -71,23 +72,41 @@ export const createFullOrder = async (req, res) => {
           batch: 1,
           status: "pending",
         }).save();
+      } else if (item.source === "warehouse") {
+        // ✅ Logic giữ hàng trong kho
+        const warehouseItem = await Warehouse.findOne({ productId: item.productId });
+        if (!warehouseItem || warehouseItem.quantity < item.quantity) {
+          await Order.findByIdAndDelete(order._id);
+          return badRequest(res, `Sản phẩm ${item.productId} không đủ số lượng trong kho`);
+        }
+
+        warehouseItem.reservedQuantity += item.quantity;
+
+        // Cập nhật trạng thái kho
+        if (warehouseItem.reservedQuantity === warehouseItem.quantity) {
+          warehouseItem.status = "ready_to_ship";
+        } else if (warehouseItem.reservedQuantity > 0) {
+          // Vẫn giữ status cũ nhưng đã có hàng chờ giao
+          // Có thể tùy chỉnh thêm logic low_stock ở đây nếu cần
+        }
+
+        await warehouseItem.save();
       }
     }
 
     // ✅ Tính toán chi tiết
-    const subtotal = totalAmount;
-    const vatAmount = subtotal * 0.1;
-    const total = subtotal + vatAmount;
+    const total = totalAmount - (Number(discount) || 0);
 
     const depositAmount = payment?.amount || 0;
     const remainingAmount = total - depositAmount;
 
-    order.subtotal = subtotal;
-    order.vat = 0.1; // 10%
-    order.vatAmount = vatAmount;
+    order.subtotal = totalAmount;
+    order.discount = Number(discount) || 0;
     order.totalAmount = total;
     order.depositAmount = depositAmount;
     order.remainingAmount = remainingAmount;
+
+    await order.save();
 
     let savedPayment = null;
 
@@ -105,7 +124,6 @@ export const createFullOrder = async (req, res) => {
       orderId: order._id,
       orderCode,
       subtotal: order.subtotal,
-      vatAmount: order.vatAmount,
       totalAmount: order.totalAmount,
       depositAmount: order.depositAmount,
       remainingAmount: order.remainingAmount,
@@ -144,12 +162,23 @@ export const getOrderById = async (req, res) => {
     }
 
     // ✅ Chạy song song để tối ưu
-    const [details, payment] = await Promise.all([
+    const [detailsRaw, payments] = await Promise.all([
       OrderDetail.find({ orderId: order._id }).populate("productId"),
-      Payment.findOne({ orderId: order._id }),
+      Payment.find({ orderId: order._id }),
     ]);
 
-    return successResponse(res, { order, details, payment }, "Order fetched successfully");
+    // Gắn trạng thái sản xuất cho từng chi tiết đơn hàng
+    const details = await Promise.all(
+      detailsRaw.map(async (detail) => {
+        const task = await ProductionTask.findOne({ orderDetailId: detail._id });
+        return {
+          ...detail.toObject(),
+          productionStatus: task ? task.status : "no_task",
+        };
+      })
+    );
+
+    return successResponse(res, { order, details, payment: payments }, "Order fetched successfully");
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }
@@ -202,10 +231,65 @@ export const updateOrder = async (req, res) => {
 
     // ❌ không cho completed nếu chưa thanh toán
     if (status === "completed") {
-      const payment = await Payment.findOne({ orderId: order._id });
+      const payments = await Payment.find({ orderId: order._id });
+      const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
-      if (!payment) {
-        return badRequest(res, "Chưa thanh toán, không thể hoàn thành");
+      if (totalPaid < order.totalAmount) {
+        return badRequest(res, "Chưa thanh toán đủ, không thể hoàn thành");
+      }
+    }
+
+    // ✅ CHECK TIẾN ĐỘ SẢN XUẤT
+    if (["transporting", "completed", "waiting_payment"].includes(status)) {
+      const pendingTasks = await ProductionTask.find({
+        orderId: order._id,
+        status: { $ne: "completed" },
+      });
+
+      if (pendingTasks.length > 0) {
+        return badRequest(res, "Không thể cập nhật vì có sản phẩm chưa hoàn thành sản xuất");
+      }
+    }
+
+    const oldStatus = order.status;
+    const newStatus = status;
+
+    // ✅ Logic xử lý kho hàng khi cập nhật trạng thái đơn hàng
+    const details = await OrderDetail.find({ orderId: order._id });
+
+    if (details && details.length > 0) {
+      for (const detail of details) {
+        const warehouseItem = await Warehouse.findOne({ productId: detail.productId });
+        if (warehouseItem) {
+          if (newStatus === "transporting" || newStatus === "completed") {
+            // Nếu trước đó chưa trừ kho (chưa từng ở trạng thái vận chuyển/hoàn thành)
+            if (oldStatus !== "transporting" && oldStatus !== "completed") {
+              warehouseItem.quantity -= detail.quantity;
+              warehouseItem.reservedQuantity -= detail.quantity;
+
+              // Cập nhật trạng thái kho sau khi trừ
+              if (warehouseItem.quantity <= 0) {
+                warehouseItem.status = "out_of_stock";
+              } else if (warehouseItem.quantity < 10) { // Ví dụ ngưỡng low_stock là 10
+                warehouseItem.status = "low_stock";
+              } else {
+                warehouseItem.status = "in_stock";
+              }
+              await warehouseItem.save();
+            }
+          } else if (newStatus === "cancelled") {
+            // Nếu đơn hàng bị huỷ, trả lại số lượng reserved
+            if (oldStatus !== "cancelled") {
+              warehouseItem.reservedQuantity -= detail.quantity;
+
+              // Cập nhật lại trạng thái kho
+              if (warehouseItem.reservedQuantity === 0) {
+                warehouseItem.status = "in_stock";
+              }
+              await warehouseItem.save();
+            }
+          }
+        }
       }
     }
 

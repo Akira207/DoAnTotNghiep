@@ -18,8 +18,12 @@ const warehouseSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["in_stock", "low_stock", "out_of_stock"],
+      enum: ["in_stock", "low_stock", "out_of_stock", "ready_to_ship"],
       default: "in_stock"
+    },
+    reservedQuantity: {
+      type: Number,
+      default: 0
     },
     note: {
       type: String

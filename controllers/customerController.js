@@ -1,4 +1,5 @@
 import Customer from "../models/Customer.js";
+import Order from "../models/Order.js";
 import {
   successResponse,
   createdResponse,
@@ -27,11 +28,28 @@ export const createCustomer = async (req, res) => {
   }
 };
 
-// GET ALL CUSTOMERS
 export const getAllCustomers = async (req, res) => {
   try {
     const customers = await Customer.find();
-    return successResponse(res, customers, "Customers fetched successfully");
+
+    // 🔥 tính công nợ
+    const customersWithDebt = await Promise.all(
+      customers.map(async (c) => {
+        const orders = await Order.find({
+          customer: c._id,
+          status: { $ne: "completed" }, // chưa hoàn thành
+        });
+
+        const debt = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        return {
+          ...c.toObject(),
+          debt,
+        };
+      }),
+    );
+
+    return successResponse(res, customersWithDebt);
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }

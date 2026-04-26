@@ -31,7 +31,13 @@ export const createOrderDetail = async (req, res) => {
     });
     const saved = await detail.save();
     // update total order
-    order.totalAmount = (order.totalAmount || 0) + quantity * price;
+    const allDetails = await OrderDetail.find({ orderId: order._id });
+    let total = 0;
+    for (let d of allDetails) {
+      total += d.quantity * d.price;
+    }
+    order.subtotal = total;
+    order.totalAmount = total - (order.discount || 0);
     await order.save();
     return createdResponse(res, saved, "Order detail created successfully");
   } catch (error) {
@@ -85,7 +91,8 @@ export const updateOrderDetail = async (req, res) => {
     for (let d of allDetails) {
       total += d.quantity * d.price;
     }
-    order.totalAmount = total;
+    order.subtotal = total;
+    order.totalAmount = total - (order.discount || 0);
     await order.save();
     return successResponse(res, updated, "Order detail updated successfully");
   } catch (error) {
@@ -110,7 +117,8 @@ export const deleteOrderDetail = async (req, res) => {
     for (let d of allDetails) {
       total += d.quantity * d.price;
     }
-    order.totalAmount = total;
+    order.subtotal = total;
+    order.totalAmount = total - (order.discount || 0);
     await order.save();
     return successResponse(res, null, "Order detail deleted successfully");
   } catch (error) {

@@ -23,16 +23,6 @@ const orderSchema = new mongoose.Schema(
       default: 0,
     },
 
-    vat: {
-      type: Number,
-      default: 0,
-    },
-
-    vatAmount: {
-      type: Number,
-      default: 0,
-    },
-
     totalAmount: {
       type: Number,
       default: 0,
