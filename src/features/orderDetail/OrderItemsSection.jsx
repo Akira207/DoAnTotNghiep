@@ -1,23 +1,20 @@
 export default function OrderItemsSection({
   items = [],
   payment = null,
+  order = {},
 }) {
-  // =========================
-  // SAFE CALCULATION
-  // =========================
-  const subtotal = items.reduce((sum, item) => {
-    const price = item.price || 0;
-    const quantity = item.quantity || 0;
-    return sum + price * quantity;
-  }, 0);
+  // Lấy dữ liệu trực tiếp từ đối tượng order được API trả về
+  const subtotal = order?.subtotal || 0;
+  const total = order?.totalAmount || 0;
+  const deposit = order?.depositAmount || 0;
 
-  const vat = subtotal * 0.1;
-  const total = subtotal + vat;
+  // Tính tổng số tiền đã thanh toán từ mảng payment
+  const totalPaid = Array.isArray(payment)
+    ? payment.reduce((sum, p) => sum + (p.amount || 0), 0)
+    : payment?.amount || 0;
 
-  // 💰 tiền đặt cọc từ payment API
-  const deposit = payment?.amount || 0;
-
-  const remaining = total - deposit;
+  // Tính số tiền còn lại phải thu: Tổng - Cọc - Tổng đã thanh toán
+  const remaining = total - deposit - totalPaid;
 
   const formatPrice = (value) =>
     (value || 0).toLocaleString("vi-VN") + "đ";
@@ -37,7 +34,20 @@ export default function OrderItemsSection({
     }
   };
 
-  const getStatusText = (status) => status || "Đang xử lý";
+  const getStatusText = (status) => {
+    switch (status) {
+      case "pending":
+        return "Đang chờ";
+      case "in-progress":
+        return "Đang sản xuất";
+      case "completed":
+        return "Đã hoàn thành";
+      case "no_task":
+        return "Chưa có lệnh SX";
+      default:
+        return status || "Đang xử lý";
+    }
+  };
 
   return (
     <section className="lg:col-span-2 space-y-6">
@@ -107,10 +117,10 @@ export default function OrderItemsSection({
 
                     <div
                       className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getStatusStyle(
-                        item.status
+                        item.productionStatus
                       )}`}
                     >
-                      {getStatusText(item.status)}
+                      Tiến độ: {getStatusText(item.productionStatus)}
                     </div>
 
                     <div className="text-primary font-bold">
@@ -151,12 +161,10 @@ export default function OrderItemsSection({
               </span>
             </div>
 
-            <div className="flex justify-between items-center text-sm font-medium">
-              <span className="text-on-surface-variant">
-                Thuế VAT (10%):
-              </span>
-              <span className="text-on-surface">
-                {formatPrice(vat)}
+            <div className="flex justify-between items-center text-sm font-medium text-error">
+              <span className="text-on-surface-variant">Giảm giá:</span>
+              <span className="font-bold">
+                -{formatPrice(order?.discount || 0)}
               </span>
             </div>
 
@@ -178,6 +186,9 @@ export default function OrderItemsSection({
 
                 <p className="text-xs text-secondary font-bold">
                   Đã đặt cọc: {formatPrice(deposit)}
+                </p>
+                <p className="text-xs text-success font-bold">
+                  Đã thanh toán: {formatPrice(totalPaid)}
                 </p>
               </div>
 

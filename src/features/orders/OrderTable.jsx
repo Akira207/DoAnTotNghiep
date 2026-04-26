@@ -24,7 +24,7 @@ const statusMap = {
     class: "bg-tertiary-container text-on-tertiary-container",
   },
   completed: {
-    label: "Đã thanh toán",
+    label: "Hoàn Thành",
     class: "bg-green-100 text-green-700",
   },
   cancelled: {

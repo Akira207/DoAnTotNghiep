@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useDebounce from "../../hooks/useDebounce";
 
 import Sidebar from "../../components/layouts/SideBar";
 import MobileHeader from "../../components/layouts/MobileHeader";
@@ -7,37 +8,72 @@ import MaterialsHistoryStats from "../../features/masterialsHistory/MaterialsHis
 import MaterialsHistoryActions from "../../features/masterialsHistory/MaterialsHistoryActions";
 import MaterialsHistoryTable from "../../features/masterialsHistory/MaterialsHistoryTable";
 import MaterialsReportBanner from "../../features/masterialsHistory/MaterialsReportBanner";
+import MaterialsImportModal from "../../features/masterialsHistory/MaterialsImportModal";
+import MaterialsHistoryEditModal from "../../features/masterialsHistory/MaterialsHistoryEditModal";
 
-import { getMaterialImports } from "../../services/materialImportService";
+import {
+  getMaterialImports,
+  createMaterialImport,
+} from "../../services/materialImportService";
 
 export default function MaterialsHistoryPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // SEARCH
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 400);
+
+  // PAGINATION (FIX LỖI)
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // MODAL
+  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
+  // fetch data khi search / page thay đổi
   useEffect(() => {
     fetchMaterials();
-  }, []);
-
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  }, [debouncedKeyword, page]);
 
   const fetchMaterials = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getMaterialImports();
-      setMaterials(Array.isArray(data) ? data : []);
+
+      const res = await getMaterialImports(debouncedKeyword, page);
+
+      setMaterials(res.data || []);
+      setTotalPages(res.totalPages || 1);
     } catch (err) {
-      console.error("Fetch materials error:", err);
       setError(err.message || "Failed to fetch materials");
       setMaterials([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  // CREATE IMPORT
+  const handleCreateImport = async (formData) => {
+    try {
+      await createMaterialImport(formData);
+      setShowModal(false);
+      setPage(1);
+      fetchMaterials();
+    } catch (err) {
+      console.error(err);
+      alert("Tạo phiếu nhập thất bại");
     }
   };
 
@@ -46,50 +82,62 @@ export default function MaterialsHistoryPage() {
       {/* Overlay */}
       <div
         onClick={toggleSidebar}
-        className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition
-        ${
+        className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition ${
           isSidebarOpen
-            ? "opacity-100 pointer-events-auto"
+            ? "opacity-100"
             : "opacity-0 pointer-events-none"
         }`}
       />
+
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
-      {/* Main content */}
       <main className="p-4 md:p-8 lg:ml-[280px]">
-        {/* <!-- Dashboard Content --> */}
-        <div className="max-w-7xl w-full mx-auto">
-            {/* Materials History header */}
-            <MaterialsHistoryHeader onRefresh={fetchMaterials} />
+        <div className="max-w-7xl mx-auto">
 
-            {error && (
-              <div className="p-4 bg-red-100 text-red-800 rounded-lg">
-                {error}
-              </div>
-            )}
+          <MaterialsHistoryHeader onRefresh={fetchMaterials} />
 
-            {loading && (
-              <div className="text-center text-slate-500">
-                Đang tải dữ liệu...
-              </div>
-            )}
+          <MaterialsHistoryActions
+            onSearch={setKeyword}
+            onAddImport={() => setShowModal(true)}
+          />
 
-            {!loading && (
-              <>
-                {/* Materials History stats */}
-                <MaterialsHistoryStats items={materials} />
+          {error && (
+            <div className="text-red-500 mb-3">{error}</div>
+          )}
 
-                {/* Materials History actions */}
-                <MaterialsHistoryActions onRefresh={fetchMaterials} />
+          {loading && <div>Loading...</div>}
 
-                {/* Materials History table */}
-                <MaterialsHistoryTable items={materials} onRefresh={fetchMaterials} />
+          {!loading && (
+            <>
+              <MaterialsHistoryStats items={materials} />
 
-                {/* Materials Report banner */}
-                <MaterialsReportBanner items={materials} />
-              </>
-            )}
+              <MaterialsHistoryTable
+                items={materials}
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                onEdit={(item) => {
+                  setSelectedItem(item);
+                  setShowEditModal(true);
+                }}
+              />
+
+              <MaterialsReportBanner />
+            </>
+          )}
+
+          <MaterialsImportModal
+            open={showModal}
+            onClose={() => setShowModal(false)}
+            onSubmit={handleCreateImport}
+          />
+          <MaterialsHistoryEditModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            item={selectedItem}
+            onUpdated={fetchMaterials}
+          />
         </div>
       </main>
     </div>

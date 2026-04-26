@@ -38,13 +38,7 @@ export default function UpdateOrderStatusModal({
         return;
       }
 
-      // 👉 UPDATE ORDER
-      await axios.put(`${API}/orders/${orderId}`, {
-        status,
-        note: status === "cancelled" ? cancelReason : note,
-      });
-
-      // 👉 CREATE PAYMENT (nếu có)
+      // 👉 CREATE PAYMENT FIRST (nếu có)
       if (amount && Number(amount) > 0) {
         await axios.post(`${API}/payments`, {
           orderId,
@@ -52,6 +46,12 @@ export default function UpdateOrderStatusModal({
           paymentMethod: method,
         });
       }
+
+      // 👉 UPDATE ORDER SECOND
+      await axios.put(`${API}/orders/${orderId}`, {
+        status,
+        note: status === "cancelled" ? cancelReason : note,
+      });
 
       alert("Cập nhật thành công!");
 
@@ -132,7 +132,7 @@ export default function UpdateOrderStatusModal({
                 onChange={(e) => setMethod(e.target.value)}
                 className="w-full bg-surface-container-low p-3 border-outline-variant/30 rounded-lg text-sm focus:border-primary focus:ring-primary"
               >
-                <option value="transfer">Chuyển khoản</option>
+                <option value="bank">Chuyển khoản</option>
                 <option value="cash">Tiền mặt</option>
                 <option value="card">Quẹt thẻ</option>
               </select>

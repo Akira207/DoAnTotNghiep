@@ -1,18 +1,39 @@
-# React + Vite
+# Frontend - Furniture Workshop Management
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Đây là giao diện người dùng cho hệ thống quản lý xưởng sản xuất đồ gỗ, được xây dựng với phong cách hiện đại, đáp ứng (responsive) và tối ưu trải nghiệm người dùng.
 
-Currently, two official plugins are available:
+## 🚀 Công nghệ sử dụng
+- **React 19**: Thư viện xây dựng giao diện người dùng.
+- **Vite**: Công cụ build frontend tốc độ cao.
+- **Tailwind CSS**: Framework CSS tiện ích để thiết kế giao diện nhanh và hiện đại.
+- **React Router DOM**: Quản lý điều hướng (routing) trong ứng dụng.
+- **Axios**: Thư viện thực hiện các request HTTP đến Backend API.
+- **Classnames & Clsx**: Hỗ trợ quản lý class CSS linh hoạt.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠 Cấu trúc thư mục
+- `src/`: Chứa toàn bộ mã nguồn của ứng dụng.
+- `public/`: Chứa các tài nguyên tĩnh như hình ảnh, icons.
+- `tailwind.config.js`: Cấu hình giao diện Tailwind.
+- `vite.config.js`: Cấu hình build của Vite.
 
-## React Compiler
+## 🌟 Tính năng chính
+- **Quản lý Dashboard**: Theo dõi tổng quan tình hình xưởng sản xuất.
+- **Quản lý đơn hàng**: Tạo và theo dõi trạng thái đơn hàng của khách.
+- **Quản lý sản phẩm**: Cập nhật danh sách sản phẩm, hình ảnh và giá cả.
+- **Quản lý kho & Vật liệu**: Theo dõi lượng nguyên liệu nhập kho.
+- **Quản lý sản xuất**: Phân công và theo dõi tiến độ các tác vụ sản xuất.
+- **Xác thực người dùng**: Đăng nhập/Đăng xuất và phân quyền truy cập.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## ⚙️ Cài đặt và Chạy
+1. Cài đặt dependencies:
+   ```bash
+   npm install
+   ```
+2. Chạy ứng dụng ở chế độ phát triển:
+   ```bash
+   npm run dev
+   ```
+3. Build ứng dụng để deploy:
+   ```bash
+   npm run build
+   ```

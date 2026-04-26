@@ -7,6 +7,7 @@ import WarehouseStats from "../../features/productsWarehouse/WarehouseStats";
 import WarehouseTable from "../../features/productsWarehouse/WarehouseTable";
 import WarehouseBottomCards from "../../features/productsWarehouse/WarehouseBottomCards";
 import WarehouseCreateModal from "../../features/productsWarehouse/WarehouseCreateModal";
+import WarehouseEditModal from "../../features/productsWarehouse/WarehouseEditModal";
 
 import { getWarehouse } from "../../services/warehouseService";
 
@@ -16,6 +17,8 @@ export default function ProductsWarehousePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
@@ -84,12 +87,22 @@ export default function ProductsWarehousePage() {
                 items={warehouseItems}
                 onRefresh={fetchWarehouse}
                 onCreate={() => setIsCreateOpen(true)}
+                onEdit={(item) => {
+                  setSelectedItem(item);
+                  setIsEditOpen(true);
+                }}
               />
               <WarehouseCreateModal
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 onCreated={fetchWarehouse}
-              />  
+              />
+              <WarehouseEditModal
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                item={selectedItem}
+                onUpdated={fetchWarehouse}
+              />
 
               {/* warehouse bottom cards */}
               <WarehouseBottomCards items={warehouseItems} />

@@ -1,42 +1,36 @@
 export default function CustomerAnalysis({ customers = [] }) {
-  // Calculate customer segments
-  const totalCustomers = customers.length || 1;
-  const projectAgencies = customers.filter(c => (c.type || "").toLowerCase().includes("dự án")).length;
-  const premiumCustomers = customers.filter(c => (c.type || "").toLowerCase().includes("cao cấp")).length;
-  const retailAgencies = customers.filter(c => (c.type || "").toLowerCase().includes("bán lẻ")).length;
-  
-  const other = totalCustomers - projectAgencies - premiumCustomers - retailAgencies;
+  const normalize = (str) => (str || "").toLowerCase().trim();
+
+  const totalCustomers = customers.length;
+
+  const agency = customers.filter(
+    c => normalize(c.type) === "agency"
+  ).length;
+
+  const retail = customers.filter(
+    c => normalize(c.type) === "retail"
+  ).length;
+
+  // ❗ tránh chia 0
+  const safeTotal = totalCustomers === 0 ? 1 : totalCustomers;
 
   const segments = [
     {
-      label: `Đại lý dự án (${Math.round((projectAgencies / totalCustomers) * 100)}%)`,
-      value: `${projectAgencies} khách`,
-      percent: `${Math.round((projectAgencies / totalCustomers) * 100)}%`,
+      label: `Đại lý (${Math.round((agency / safeTotal) * 100)}%)`,
+      value: `${agency} khách`,
+      percent: `${Math.round((agency / safeTotal) * 100)}%`,
       color: "bg-primary",
     },
     {
-      label: `Khách lẻ cao cấp (${Math.round((premiumCustomers / totalCustomers) * 100)}%)`,
-      value: `${premiumCustomers} khách`,
-      percent: `${Math.round((premiumCustomers / totalCustomers) * 100)}%`,
+      label: `Khách lẻ (${Math.round((retail / safeTotal) * 100)}%)`,
+      value: `${retail} khách`,
+      percent: `${Math.round((retail / safeTotal) * 100)}%`,
       color: "bg-secondary",
     },
-    {
-      label: `Đại lý bán lẻ (${Math.round((retailAgencies / totalCustomers) * 100)}%)`,
-      value: `${retailAgencies} khách`,
-      percent: `${Math.round((retailAgencies / totalCustomers) * 100)}%`,
-      color: "bg-tertiary",
-    },
-    ...(other > 0 ? [{
-      label: `Khác (${Math.round((other / totalCustomers) * 100)}%)`,
-      value: `${other} khách`,
-      percent: `${Math.round((other / totalCustomers) * 100)}%`,
-      color: "bg-surface-dim",
-    }] : []),
   ];
 
   return (
     <div className="lg:col-span-7 space-y-6">
-      {/* Segment */}
       <div className="bg-surface-container-lowest p-6 rounded-lg shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <h2 className="text-sm font-bold text-on-surface uppercase tracking-widest mb-6">
           Phân khúc khách hàng
@@ -63,7 +57,7 @@ export default function CustomerAnalysis({ customers = [] }) {
         </div>
       </div>
 
-      {/* Notes */}
+      {/* giữ nguyên UI */}
       <div className="bg-on-primary-container text-on-primary p-6 rounded-lg">
         <div className="flex items-center gap-3 mb-3">
           <span className="material-symbols-outlined text-secondary">

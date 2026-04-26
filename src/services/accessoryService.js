@@ -2,40 +2,38 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api/accessories";
 
-// ✅ Helper to extract data from API response
-const getResponseData = (response) => response.data || response;
+// GET ALL (có query)
+export const getAccessories = async ({
+  keyword = "",
+  page = 1,
+  limit = 8,
+} = {}) => {
+  const res = await axios.get(API, {
+    params: { keyword, page, limit },
+  });
 
-// GET ALL ACCESSORIES
-export const getAccessories = async () => {
-  const res = await axios.get(API);
-  const data = getResponseData(res);
-  return data.data || data;
+  return res.data.data; // { data, page, totalPages }
 };
 
-// GET ACCESSORY BY ID
-export const getAccessoryById = async (id) => {
-  const res = await axios.get(`${API}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+// CREATE (upload ảnh)
+export const createAccessory = async (formData) => {
+  const res = await axios.post(API, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data.data;
 };
 
-// CREATE ACCESSORY
-export const createAccessory = async (accessoryData) => {
-  const res = await axios.post(API, accessoryData);
-  const data = getResponseData(res);
-  return data.data || data;
+// UPDATE
+export const updateAccessory = async (id, formData) => {
+  const res = await axios.put(`${API}/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data.data;
 };
 
-// UPDATE ACCESSORY
-export const updateAccessory = async (id, accessoryData) => {
-  const res = await axios.put(`${API}/${id}`, accessoryData);
-  const data = getResponseData(res);
-  return data.data || data;
-};
-
-// DELETE ACCESSORY
+// DELETE
 export const deleteAccessory = async (id) => {
-  const res = await axios.delete(`${API}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  await axios.delete(`${API}/${id}`);
 };

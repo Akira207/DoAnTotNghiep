@@ -26,6 +26,25 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
     product?.image || product?.thumbnail || product?.images?.[0] || null;
 
   // =========================
+  // FORMAT SIZE
+  // =========================
+  const formatSize = () => {
+    if (item.specs && (item.specs.height || item.specs.width || item.specs.depth)) {
+      const h = item.specs.height || "0";
+      const w = item.specs.width || "0";
+      const d = item.specs.depth || "0";
+      return `Cao ${h} x Ngang ${w} x Sâu ${d}`;
+    }
+    if (product && (product.height || product.width || product.depth)) {
+      const h = product.height || "0";
+      const w = product.width || "0";
+      const d = product.depth || "0";
+      return `Cao ${h} x Ngang ${w} x Sâu ${d}`;
+    }
+    return "N/A";
+  };
+
+  // =========================
   // CYCLE STATUS
   // =========================
   const handleCycleStatus = () => {
@@ -34,6 +53,22 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
     const index = STATUS_FLOW.indexOf(localStatus);
     const next = STATUS_FLOW[(index + 1) % STATUS_FLOW.length];
     setLocalStatus(next);
+  };
+
+  // =========================
+  // DELETE TASK
+  // =========================
+  const handleDelete = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa lệnh sản xuất này không?")) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/production-tasks/${item._id}`);
+      onUpdated?.();
+      onClose?.();
+    } catch (err) {
+      console.error("DELETE ERROR:", err);
+      alert("Không thể xóa lệnh sản xuất này.");
+    }
   };
 
   // =========================
@@ -47,11 +82,7 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
       );
 
       setEditMode(false);
-
-      // reload list
       onUpdated?.();
-
-      // close modal
       onClose?.();
     } catch (err) {
       console.error(err);
@@ -60,86 +91,141 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-sm shadow-2xl flex flex-col overflow-hidden">
-        {/* HEADER */}
-        <div className="flex justify-between items-center px-8 py-6 border-b border-slate-200">
+      <div className="bg-white w-full max-w-4xl max-h-[921px] rounded-sm shadow-2xl flex flex-col overflow-hidden">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center px-8 py-6 border-b border-surface">
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-6 bg-[#007BFF]"></div>
-            <h2 className="text-xl font-bold">
-              Chi tiết #{item._id?.slice(-6)}
+            <h2 className="text-xl font-bold tracking-tight text-on-surface">
+              Chi tiết Lệnh Sản xuất #{item._id?.slice(-6)}
             </h2>
           </div>
 
-          <button onClick={onClose}>
+          <button onClick={onClose} className="text-slate-400 hover:text-on-surface transition-colors">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        {/* CONTENT */}
-        <div className="flex-1 overflow-y-auto p-8">
+        {/* Modal Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
           <div className="grid grid-cols-12 gap-8">
-            {/* IMAGE */}
+            {/* Product Visual */}
             <div className="col-span-12 lg:col-span-5">
-              <div className="aspect-square bg-slate-100 rounded-sm overflow-hidden">
+              <div className="aspect-square bg-surface-container rounded-sm overflow-hidden group">
                 {image ? (
-                  <img src={image} className="w-full h-full object-cover" />
+                  <img
+                    src={image}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    alt="Product"
+                  />
                 ) : (
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex items-center justify-center h-full text-slate-400">
                     Không có ảnh
                   </div>
                 )}
               </div>
+              <div className="mt-4 flex items-center gap-4">
+                <div className="flex-1 p-4 bg-surface-container-low rounded-sm text-center">
+                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">
+                    Mã SP
+                  </p>
+                  <p className="font-bold text-on-surface">
+                    {product?.sku || product?.name || "N/A"}
+                  </p>
+                </div>
+                <div className="flex-1 p-4 bg-surface-container-low rounded-sm text-center">
+                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">
+                    Màu sơn
+                  </p>
+                  <p className="font-bold text-on-surface">
+                    {product?.color || "Natural PU"}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* INFO */}
+            {/* Technical Specs */}
             <div className="col-span-12 lg:col-span-7 space-y-6">
-              {/* STATUS */}
-              <div className="p-4 bg-slate-50 border-l-2 border-blue-500">
-                <p className="text-xs font-bold text-slate-500">Trạng thái</p>
-
-                <p
-                  onClick={handleCycleStatus}
-                  className="text-lg font-bold text-blue-600 flex items-center gap-2 cursor-pointer"
-                >
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  {STATUS_LABEL[localStatus]}
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-surface-container-low border-l-2 border-primary-container">
+                  <p className="text-xs font-bold text-slate-500 mb-1">Đợt</p>
+                  <p className="text-lg font-bold text-on-surface">
+                    {item.batch || 1}
+                  </p>
+                </div>
+                <div className={`p-4 border-l-2 transition-all duration-300 ${editMode ? 'bg-secondary-container/20 border-secondary ring-2 ring-secondary/30' : 'bg-surface-container-low border-blue-500'}`}>
+                  <p className="text-xs font-bold text-slate-500 mb-1">Trạng thái</p>
+                  <p
+                    onClick={handleCycleStatus}
+                    className={`text-lg font-bold flex items-center gap-2 transition-all ${editMode ? 'text-secondary cursor-pointer hover:opacity-80 active:scale-95' : 'text-blue-600'}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${editMode ? 'bg-secondary' : 'bg-blue-500'}`}></span>
+                    {STATUS_LABEL[localStatus]}
+                  </p>
+                </div>
               </div>
 
-              {/* INFO */}
               <div className="space-y-4">
-                <div className="flex justify-between border-b py-2">
-                  <span>Kích thước</span>
-                  <span className="font-bold">{product?.size || "N/A"}</span>
-                </div>
-
-                <div className="flex justify-between border-b py-2">
-                  <span>Vật liệu</span>
-                  <span className="font-bold">
-                    {product?.material || "N/A"}
+                <div className="flex justify-between items-center py-3 border-b border-surface">
+                  <span className="text-slate-500 font-medium">Kích thước</span>
+                  <span className="font-bold text-on-surface">
+                    {formatSize()}
                   </span>
                 </div>
-
-                <div className="flex justify-between border-b py-2">
-                  <span>Số lượng</span>
-                  <span className="font-bold">
-                    {item.orderDetailId?.quantity || 0}
+                <div className="flex justify-between items-center py-3 border-b border-surface">
+                  <span className="text-slate-500 font-medium">Vật liệu</span>
+                  <span className="font-bold text-on-surface">
+                    {product?.material || item.material || "N/A"}
                   </span>
                 </div>
+                <div className="flex justify-between items-center py-3 border-b border-surface">
+                  <span className="text-slate-500 font-medium">Số lượng</span>
+                  <span className="font-bold text-on-surface text-lg">
+                    {item.quantity || 0} bộ
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-5 bg-surface-container-highest/30 rounded-sm">
+                <div className="flex items-center gap-2 mb-3 text-primary">
+                  <span className="material-symbols-outlined text-sm">assignment</span>
+                  <h4 className="text-xs font-bold uppercase tracking-widest">
+                    Ghi chú kỹ thuật
+                  </h4>
+                </div>
+                <p className="text-sm leading-relaxed text-on-surface-variant font-medium">
+                  {item.note || "Không có ghi chú kỹ thuật."}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="px-8 py-6 bg-slate-50 flex justify-between items-center">
-          <button onClick={onClose}>Đóng</button>
+        {/* Modal Footer */}
+        <div className="px-8 py-6 bg-surface-container-low flex justify-between items-center">
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 font-bold text-slate-500 hover:text-on-surface transition-colors rounded-sm flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+              Đóng
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-6 py-3 font-bold text-red-500 hover:text-red-700 transition-colors rounded-sm flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[20px]">delete</span>
+              Xóa
+            </button>
+          </div>
 
           {!editMode ? (
             <button
               onClick={() => setEditMode(true)}
-              className="px-8 py-3 bg-blue-600 text-white"
+              className="px-10 py-3 bg-gradient-to-r from-[#007BFF] to-[#0056b3] text-white font-bold rounded-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
             >
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>sync</span>
               Cập nhật trạng thái
             </button>
           ) : (
@@ -149,14 +235,16 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
                   setEditMode(false);
                   setLocalStatus(item.status);
                 }}
+                className="px-6 py-3 font-bold text-slate-500 hover:text-on-surface transition-colors rounded-sm"
               >
                 Huỷ
               </button>
 
               <button
                 onClick={handleSave}
-                className="px-8 py-3 bg-green-600 text-white"
+                className="px-10 py-3 bg-green-600 text-white font-bold rounded-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
               >
+                <span className="material-symbols-outlined text-[20px]">check_circle</span>
                 Lưu
               </button>
             </div>

@@ -19,6 +19,8 @@ export default function AddAccessoryForm({
     description: "",
   });
 
+  const [file, setFile] = useState(null);
+
   // =========================
   // INIT / RESET
   // =========================
@@ -54,10 +56,21 @@ export default function AddAccessoryForm({
     e.preventDefault();
 
     try {
+      const formData = new FormData();
+
+      Object.keys(form).forEach((key) => {
+        formData.append(key, form[key]);
+      });
+
+      // ✅ thêm ảnh
+      if (file) {
+        formData.append("image", file);
+      }
+
       if (isEdit) {
-        await updateAccessory(accessory._id, form);
+        await updateAccessory(accessory._id, formData);
       } else {
-        await createAccessory(form);
+        await createAccessory(formData);
       }
 
       alert(isEdit ? "Cập nhật thành công" : "Thêm thành công");
@@ -132,6 +145,13 @@ export default function AddAccessoryForm({
         onChange={handleChange}
         placeholder="Mô tả"
         className="w-full px-4 py-2 border rounded h-24 resize-none"
+      />
+
+      {/* ✅ IMAGE (thêm nhưng KHÔNG phá UI) */}
+      <input
+        type="file"
+        onChange={(e) => setFile(e.target.files[0])}
+        className="w-full text-sm"
       />
 
       {/* ACTION */}

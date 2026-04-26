@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import useDebounce from "../../hooks/useDebounce";
+import WarehousePagination from "./WarehousePagination";
 
 const statusMap = {
   in_stock: {
@@ -14,13 +15,26 @@ const statusMap = {
     label: "Chờ đóng gói",
     className: "bg-secondary/10 text-secondary",
   },
-  ready: {
+  ready_to_ship: {
     label: "Sẵn sàng giao",
     className: "bg-tertiary/10 text-tertiary",
   },
 };
 
-const getStatus = (quantity, itemStatus) => {
+const getStatus = (item) => {
+  const { quantity, reservedQuantity, status: itemStatus } = item;
+
+  if (itemStatus === "ready_to_ship" || reservedQuantity > 0) {
+    const label =
+      reservedQuantity === quantity
+        ? "Sẵn sàng giao"
+        : `Sẵn sàng giao (${reservedQuantity}/${quantity})`;
+    return {
+      label,
+      className: "bg-tertiary/10 text-tertiary",
+    };
+  }
+
   if (itemStatus) {
     const key = itemStatus.toLowerCase().replace(" ", "_");
     return (
@@ -31,17 +45,63 @@ const getStatus = (quantity, itemStatus) => {
     );
   }
 
-  if (quantity < 10) {
-    return statusMap.low_stock;
-  }
+  if (quantity < 10) return statusMap.low_stock;
   return statusMap.in_stock;
 };
 
-export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
-  const [data] = useState(items);
+export default function WarehouseTable({
+  items = [],
+  onRefresh,
+  onCreate,
+  onEdit,
+}) {
+  // =========================
+  // SEARCH
+  // =========================
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
-  if (!data.length) {
+
+  // =========================
+  // PAGINATION STATE
+  // =========================
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  // reset page khi search
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  // =========================
+  // FILTER DATA
+  // =========================
+  const filteredData = useMemo(() => {
+    const keyword = debouncedSearch.toLowerCase().trim();
+
+    return items.filter((item) => {
+      const product = item.productId || item.product || {};
+
+      if (!keyword) return true;
+
+      return (
+        product?.name?.toLowerCase().includes(keyword) ||
+        product?.category?.toLowerCase().includes(keyword)
+      );
+    });
+  }, [items, debouncedSearch]);
+
+  // =========================
+  // PAGINATION DATA
+  // =========================
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filteredData.slice(start, start + limit);
+  }, [filteredData, page]);
+
+  // =========================
+  // EMPTY STATE
+  // =========================
+  if (!items.length) {
     return (
       <section className="bg-surface-container-lowest rounded-xl shadow-sm p-8 text-center">
         <p className="text-on-surface-variant">Chưa có dữ liệu kho hàng</p>
@@ -49,19 +109,9 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
     );
   }
 
-  const filteredData = items.filter((item) => {
-    const product = item.productId || item.product || {};
-
-    const keyword = debouncedSearch.toLowerCase();
-
-    return (
-      product.name?.toLowerCase().includes(keyword) ||
-      product.category?.toLowerCase().includes(keyword)
-    );
-  });
   return (
     <section className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-surface-container sm:flex-wrap">
         <h3 className="text-lg font-bold text-on-surface">
           Danh sách Thành phẩm
@@ -76,6 +126,7 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
             <span>Nhập kho mới</span>
           </button>
 
+          {/* SEARCH */}
           <div className="relative w-64 group">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">
               search
@@ -99,7 +150,7 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
         </div>
       </div>
 
-      {/* Table */}
+      {/* ================= TABLE ================= */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead className="bg-surface-container-low text-xs font-bold uppercase tracking-wider text-on-surface-variant">
@@ -114,20 +165,22 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
           </thead>
 
           <tbody className="divide-y divide-surface-container">
-            {filteredData.map((item) => {
-              const status = getStatus(item.quantity, item.status);
+            {paginatedData.map((item) => {
+              const status = getStatus(item);
 
-              // 🔥 FIX QUAN TRỌNG
               const product = item.productId || item.product || null;
 
               const image =
-                product?.image || product?.thumbnail || product?.images?.[0];
+                product?.image ||
+                product?.thumbnail ||
+                product?.images?.[0];
 
               return (
                 <tr
                   key={item._id || item.id}
                   className="hover:bg-surface-container-low/50 transition-colors group"
                 >
+                  {/* PRODUCT */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
@@ -160,6 +213,7 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
                     {item.quantity || 0}
                   </td>
 
+                  {/* FIXED LOCATION */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5 text-xs font-medium bg-surface-container-high px-2 py-1 rounded w-fit">
                       <span className="material-symbols-outlined text-[14px]">
@@ -178,7 +232,10 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
                   </td>
 
                   <td className="px-6 py-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
+                    <button
+                      onClick={() => onEdit && onEdit(item)}
+                      className="p-1 text-on-surface-variant hover:text-primary transition-colors"
+                    >
                       <span className="material-symbols-outlined">edit</span>
                     </button>
                     <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
@@ -194,35 +251,18 @@ export default function WarehouseTable({ items = [], onRefresh, onCreate }) {
         </table>
       </div>
 
-      {/* Pagination giữ nguyên */}
+      {/* ================= PAGINATION ================= */}
       <div className="px-6 py-4 flex items-center justify-between border-t border-surface-container">
         <p className="text-xs text-on-surface-variant font-medium">
-          Hiển thị 1 - {data.length} trên 256 sản phẩm
+          Hiển thị {paginatedData.length} trên {filteredData.length} sản phẩm
         </p>
 
-        <div className="flex items-center gap-1">
-          <button className="p-1 rounded hover:bg-surface-container transition-colors disabled:opacity-50">
-            <span className="material-symbols-outlined">chevron_left</span>
-          </button>
-
-          <button className="w-8 h-8 flex items-center justify-center text-xs font-bold bg-primary text-white rounded">
-            1
-          </button>
-
-          <button className="w-8 h-8 flex items-center justify-center text-xs font-medium text-on-surface-variant hover:bg-surface-container rounded">
-            2
-          </button>
-
-          <button className="w-8 h-8 flex items-center justify-center text-xs font-medium text-on-surface-variant hover:bg-surface-container rounded">
-            3
-          </button>
-
-          <span className="px-2 text-on-surface-variant">...</span>
-
-          <button className="p-1 rounded hover:bg-surface-container transition-colors">
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
+        <WarehousePagination
+          page={page}
+          total={filteredData.length}
+          limit={limit}
+          onPageChange={setPage}
+        />
       </div>
     </section>
   );

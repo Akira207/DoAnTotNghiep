@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import useDebounce from "../hooks/useDebounce";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
+
 import AccessoryHeader from "../features/accessory/AccessoryHeader";
 import AccessoryGrid from "../features/accessory/AccessoryGrid";
 import AccessoryPagination from "../features/accessory/AccessoryPagination";
@@ -11,50 +13,55 @@ import { getAccessories } from "../services/accessoryService";
 
 export default function AccessoriesPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [accessories, setAccessories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  // ✅ SEARCH
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 400);
+
+  // ✅ PAGINATION
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // modal
   const [formOpen, setFormOpen] = useState(false);
   const [editAccessory, setEditAccessory] = useState(null);
 
-  useEffect(() => {
-    document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
-  }, [isSidebarOpen]);
+  const handleEdit = (item) => {
+    setEditAccessory(item);
+    setFormOpen(true);
+  };
 
   useEffect(() => {
     fetchAccessories();
-  }, []);
-
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  }, [debouncedKeyword, page]);
 
   const fetchAccessories = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const data = await getAccessories();
-      setAccessories(Array.isArray(data) ? data : []);
+
+      const res = await getAccessories({
+        keyword: debouncedKeyword,
+        page,
+      });
+
+      setAccessories(res.data || []);
+      setTotalPages(res.totalPages || 1);
+      setPage(res.page || 1);
     } catch (err) {
       console.error("Fetch accessories error:", err);
-      setError(err.message || "Failed to fetch accessories");
-      setAccessories([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOpenForm = () => {
-    setEditAccessory(null);
-    setFormOpen(true);
-  };
-
-  const handleCloseForm = () => {
-    setFormOpen(false);
-    setEditAccessory(null);
-  };
+  const toggleSidebar = () => setIsSidebarOpen((p) => !p);
 
   const handleSuccess = () => {
     fetchAccessories();
-    handleCloseForm();
+    setFormOpen(false);
   };
 
   return (
@@ -74,39 +81,40 @@ export default function AccessoriesPage() {
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
       <main className="p-4 md:p-8 lg:ml-[280px] space-y-6">
-        {/* header */}
-        <AccessoryHeader onOpenForm={handleOpenForm} />
-        
-        {/* error message */}
-        {error && (
-          <div className="p-4 bg-red-100 text-red-800 rounded-lg">
-            {error}
-          </div>
-        )}
+        {/* Header giữ nguyên UI */}
+        <AccessoryHeader
+          onSearch={setKeyword}
+          onOpenForm={() => {
+            setEditAccessory(null);
+            setFormOpen(true);
+          }}
+        />
 
-        {/* loading state */}
+        {/* Loading */}
         {loading && (
-          <div className="text-center text-slate-500">
-            Đang tải dữ liệu...
-          </div>
+          <div className="text-center text-slate-500">Đang tải dữ liệu...</div>
         )}
 
-        {/* grid */}
+        {/* Data */}
         {!loading && (
           <>
-            <AccessoryGrid accessories={accessories} onRefresh={fetchAccessories} />
-            {/* pagination */}
-            <AccessoryPagination items={accessories} />
+            <AccessoryGrid accessories={accessories} onEdit={handleEdit} />
+
+            <AccessoryPagination
+              page={page}
+              totalPages={totalPages}
+              onChange={setPage}
+            />
           </>
         )}
       </main>
 
-      {/* FORM MODAL */}
+      {/* MODAL */}
       {formOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
           <AddAccessoryForm
             accessory={editAccessory}
-            onClose={handleCloseForm}
+            onClose={() => setFormOpen(false)}
             onSuccess={handleSuccess}
           />
         </div>

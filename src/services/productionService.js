@@ -5,9 +5,12 @@ const API = "http://localhost:5000/api/production-tasks";
 const getResponseData = (response) => response.data || response;
 
 // GET ALL TASKS
-export const getProductionTasks = async (status) => {
+export const getProductionTasks = async (status, search = "") => {
   const res = await axios.get(API, {
-    params: status ? { status } : {},
+    params: {
+      status: status || undefined,
+      search: search || undefined,
+    },
   });
   const data = getResponseData(res);
   return data.data || data;

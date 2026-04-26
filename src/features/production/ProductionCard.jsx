@@ -27,21 +27,38 @@ const statusConfig = {
 
 const ProductionCard = ({ item, onDetail }) => {
   const config = statusConfig[item.status] || statusConfig.pending;
-
-  // ✅ FIX: dùng field đã normalize từ backend
   const product = item.product || null;
+
+  const formatSize = () => {
+    if (item.specs && (item.specs.height || item.specs.width || item.specs.depth)) {
+      const h = item.specs.height || "0";
+      const w = item.specs.width || "0";
+      const d = item.specs.depth || "0";
+      return `C${h} x N${w} x S${d}`;
+    }
+    if (product && (product.height || product.width || product.depth)) {
+      const h = product.height || "0";
+      const w = product.width || "0";
+      const d = product.depth || "0";
+      return `C${h} x N${w} x S${d}`;
+    }
+    return "N/A";
+  };
 
   const image =
     product?.image ||
     product?.thumbnail ||
     product?.images?.[0];
+  const typeLabel = item.orderDetailId?.orderId?.orderCode
+    ? "Đơn hàng"
+    : item.type === "stock"
+      ? "Kho"
+      : "Sản xuất";
 
-  const code =
-    item.orderDetailId?.orderId?.orderCode ||
-    item.type === "stock"
-      ? "STOCK"
-      : "MANUAL";
-
+  const displayCode = item.orderDetailId?.orderId?.orderCode ||
+                      item.type === "stock"
+                        ? ""
+                        : `#${item._id?.slice(-6).toUpperCase()}`;
   return (
     <div
       className={`bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col group hover:shadow-xl transition-all duration-300 relative overflow-hidden border-l-4 ${config.border}`}
@@ -51,12 +68,10 @@ const ProductionCard = ({ item, onDetail }) => {
         <div className="bg-slate-50 text-slate-500 font-bold text-xs py-1.5 px-3 rounded-lg border border-slate-100">
           #{item._id?.slice(-6)}
         </div>
-
         <div className={`text-[10px] font-black px-3 py-1.5 rounded-full ${config.badge}`}>
           {config.label}
         </div>
       </div>
-
       {/* BODY */}
       <div className="flex gap-4 mb-6">
         {/* IMAGE */}
@@ -69,43 +84,58 @@ const ProductionCard = ({ item, onDetail }) => {
             </div>
           )}
         </div>
-
         {/* INFO */}
         <div className="flex-1 min-w-0">
           <h4 className="text-xl font-black text-slate-900 truncate">
             {product?.name || "Không có sản phẩm"}
           </h4>
-
-          <p className="text-[10px] text-slate-400 font-bold uppercase mb-3">
-            {code}
-          </p>
-
-          <div className="grid grid-cols-2 gap-y-2">
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">
+                Loại lệnh
+              </p>
+              <p className="text-xs font-semibold text-slate-700">
+                {typeLabel}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">
+                Mã lệnh/Đơn hàng
+              </p>
+              <p className="text-xs font-semibold text-slate-700">
+                {displayCode || "N/A"}
+              </p>
+            </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase">
                 Số lượng
               </p>
-              <p className="text-xs font-semibold">
+              <p className="text-xs font-semibold text-slate-700">
                 {item.quantity}
               </p>
             </div>
-
             <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">
+                Kích thước
+              </p>
+              <p className="text-xs font-semibold text-slate-700">
+                {formatSize()}
+              </p>
+            </div>
+            <div className="col-span-2">
               <p className="text-[10px] font-bold text-slate-400 uppercase">
                 Đợt
               </p>
-              <p className="text-xs font-semibold">
+              <p className="text-xs font-semibold text-slate-700">
                 {item.batch || 1}
               </p>
             </div>
           </div>
-
           <div className="text-xs text-slate-500 mt-2">
             {product?.material || item.material || "Không có vật liệu"}
           </div>
         </div>
       </div>
-
       {/* FOOTER */}
       <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
         <div className={`flex items-center gap-2 ${config.text}`}>
@@ -116,7 +146,6 @@ const ProductionCard = ({ item, onDetail }) => {
             {config.subText}
           </span>
         </div>
-
         <button
           onClick={() => onDetail?.(item)}
           className="text-blue-600 font-bold text-xs uppercase"

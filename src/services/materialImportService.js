@@ -6,9 +6,16 @@ const API = "http://localhost:5000/api/material-imports";
 const getResponseData = (response) => response.data || response;
 
 // GET ALL MATERIAL IMPORTS
-export const getMaterialImports = async () => {
-  const res = await axios.get(API);
-  const data = getResponseData(res);
+export const getMaterialImports = async (search = "", page = 1) => {
+  const res = await axios.get(API, {
+    params: {
+      materialName: search,
+      page,
+      limit: 10,
+    },
+  });
+
+  const data = res.data;
   return data.data || data;
 };
 

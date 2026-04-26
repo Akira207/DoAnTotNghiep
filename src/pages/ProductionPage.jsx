@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import useDebounce from "../hooks/useDebounce";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
@@ -7,7 +8,7 @@ import ProductionHeader from "../features/production/ProductionHeader";
 import ProductionFilters from "../features/production/ProductionFilters";
 import ProductionSummary from "../features/production/ProductionSummary";
 import ProductionGrid from "../features/production/ProductionGrid";
-import Pagination from "../components/Pagination";
+import ProductionPagination from "../features/production/ProductionPagination";
 
 import ProductionDetailModal from "../features/production/ProductionDetailModal";
 import ProductionCreateModal from "../features/production/ProductionCreateModal";
@@ -21,6 +22,8 @@ export default function ProductionPage() {
   const [loading, setLoading] = useState(true);
 
   const [status, setStatus] = useState("Tất cả");
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 400);
   const [page, setPage] = useState(1);
 
   const [selectedTask, setSelectedTask] = useState(null);
@@ -45,7 +48,7 @@ export default function ProductionPage() {
           ? "completed"
           : "pending";
 
-      const data = await getProductionTasks(statusQuery);
+      const data = await getProductionTasks(statusQuery, debouncedKeyword);
 
       setTasks(data.data || data);
     } catch (err) {
@@ -57,7 +60,7 @@ export default function ProductionPage() {
 
   useEffect(() => {
     fetchTasks();
-  }, [status]);
+  }, [status, page, debouncedKeyword]);
 
   // ======================
   // DETAIL
@@ -81,11 +84,26 @@ export default function ProductionPage() {
   };
 
   const start = (page - 1) * limit;
-  const paginatedTasks = tasks.slice(start, start + limit);
+  const sortedTasks = useMemo(() => {
+    const statusOrder = {
+      "pending": 1,
+      "in-progress": 2,
+      "completed": 3,
+    };
+    return [...tasks].sort((a, b) => {
+      const orderA = statusOrder[a.status] || 99;
+      const orderB = statusOrder[b.status] || 99;
+      if (orderA !== orderB) return orderA - orderB;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+  }, [tasks]);
 
-  if (loading) {
-    return <div className="p-10 text-center">Loading...</div>;
-  }
+  const paginatedTasks = sortedTasks.slice(start, start + limit);
+
+  // Remove this block:
+  // if (loading) {
+  //   return <div className="p-10 text-center">Loading...</div>;
+  // }
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,7 +113,10 @@ export default function ProductionPage() {
 
       <main className="lg:ml-[280px] p-6">
 
-        <ProductionHeader onCreate={() => setIsCreateOpen(true)} />
+        <ProductionHeader
+          onCreate={() => setIsCreateOpen(true)}
+          onSearch={setKeyword}
+        />
 
         <ProductionFilters onStatusChange={setStatus} />
 
@@ -106,7 +127,7 @@ export default function ProductionPage() {
           onDetail={handleOpenDetail}
         />
 
-        <Pagination
+        <ProductionPagination
           page={page}
           total={tasks.length}
           limit={limit}

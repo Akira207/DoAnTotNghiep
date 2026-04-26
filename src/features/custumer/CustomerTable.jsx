@@ -1,41 +1,31 @@
-import { useEffect, useState } from "react";
-import { getCustomers, deleteCustomer } from "../../services/customerService";
+import { deleteCustomer } from "../../services/customerService";
 
-export default function CustomerTable() {
-  const [customers, setCustomers] = useState([]);
-  const [search, setSearch] = useState("");
-
-  // load data
-  const fetchData = async () => {
-    const data = await getCustomers();
-    setCustomers(data);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
+export default function CustomerTable({
+  customers = [],
+  page = 1,
+  totalPages = 1,
+  onChangePage = () => {},
+}) {
   // delete
   const handleDelete = async (id) => {
-    await deleteCustomer(id);
-    fetchData();
+    try {
+      await deleteCustomer(id);
+      window.location.reload(); // giữ behavior đơn giản
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
-
-  // filter search (frontend simple)
-  const filtered = customers.filter((c) =>
-    `${c.name} ${c.phone} ${c.address}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
 
   return (
     <section className="bg-surface-container-lowest rounded-lg shadow-[4px_0_24px_rgba(0,0,0,0.02)] overflow-hidden">
-      {/* Header */}
+      
+      {/* Header (GIỮ NGUYÊN UI) */}
       <div className="px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-lg font-bold text-on-surface">
           Danh sách đối tác & khách hàng
         </h2>
 
+        {/* ⚠️ giữ UI nhưng disable search nội bộ */}
         <div className="flex w-full md:w-auto">
           <div className="relative w-full sm:w-96">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
@@ -43,10 +33,9 @@ export default function CustomerTable() {
             </span>
 
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              disabled
               placeholder="Tìm kiếm khách hàng..."
-              className="w-full pl-10 pr-4 py-2.5 bg-surface-container-high rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-surface-container-high rounded-lg outline-none text-sm opacity-50"
             />
           </div>
         </div>
@@ -67,13 +56,13 @@ export default function CustomerTable() {
           </thead>
 
           <tbody className="divide-y divide-slate-50">
-            {filtered.map((c, index) => (
+            {customers.map((c, index) => (
               <tr
                 key={c._id || c.id}
                 className="hover:bg-slate-50 transition-colors"
               >
                 <td className="px-6 py-4 text-sm text-slate-400">
-                  {String(index + 1).padStart(2, "0")}
+                  {String((page - 1) * 10 + index + 1).padStart(2, "0")}
                 </td>
 
                 <td className="px-6 py-4">
@@ -96,7 +85,9 @@ export default function CustomerTable() {
                   </div>
                 </td>
 
-                <td className="px-6 py-4 text-sm text-slate-600">{c.phone}</td>
+                <td className="px-6 py-4 text-sm text-slate-600">
+                  {c.phone}
+                </td>
 
                 <td className="px-6 py-4">
                   <span
@@ -128,18 +119,55 @@ export default function CustomerTable() {
         </table>
       </div>
 
-      {/* Pagination (GIỮ UI, chưa backend paging) */}
+      {/* Pagination (GIỮ NGUYÊN UI) */}
       <div className="px-6 py-4 bg-surface-container-low flex justify-between items-center text-xs text-slate-500 font-medium">
-        <p>Hiển thị {filtered.length} khách hàng</p>
+        <p>
+          Trang {page} / {totalPages}
+        </p>
 
         <div className="flex gap-1">
-          <button className="px-2 py-1 rounded bg-white border border-slate-200">
-            1
+          <button
+            onClick={() => page > 1 && onChangePage(page - 1)}
+            className="px-2 py-1 rounded hover:bg-slate-100"
+          >
+            ‹
           </button>
-          <button className="px-2 py-1 rounded hover:bg-slate-100">2</button>
-          <button className="px-2 py-1 rounded hover:bg-slate-100">3</button>
-          <span className="px-1 self-end">...</span>
-          <button className="px-2 py-1 rounded hover:bg-slate-100">125</button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .slice(0, 3)
+            .map((p) => (
+              <button
+                key={p}
+                onClick={() => onChangePage(p)}
+                className={`px-2 py-1 rounded ${
+                  p === page
+                    ? "bg-white border border-slate-200"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+
+          {totalPages > 3 && <span className="px-1 self-end">...</span>}
+
+          {totalPages > 3 && (
+            <button
+              onClick={() => onChangePage(totalPages)}
+              className="px-2 py-1 rounded hover:bg-slate-100"
+            >
+              {totalPages}
+            </button>
+          )}
+
+          <button
+            onClick={() =>
+              page < totalPages && onChangePage(page + 1)
+            }
+            className="px-2 py-1 rounded hover:bg-slate-100"
+          >
+            ›
+          </button>
         </div>
       </div>
     </section>

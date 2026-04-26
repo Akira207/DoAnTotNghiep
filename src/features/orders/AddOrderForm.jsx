@@ -81,8 +81,7 @@ export default function AddOrderForm({ onClose, onSuccess }) {
     0
   );
 
-  const vat = subtotal * 0.1;
-  const totalPreview = subtotal + vat - Number(discount || 0);
+  const totalPreview = subtotal - Number(discount || 0);
 
   // SUBMIT
   const handleSubmit = async () => {
@@ -227,10 +226,13 @@ export default function AddOrderForm({ onClose, onSuccess }) {
 
         {/* DISCOUNT */}
         <div className="mt-3">
+          <label className="block text-sm font-medium mb-1 text-on-surface-variant">
+            Giảm giá (VNĐ)
+          </label>
           <input
             type="number"
             className="w-full border p-2 rounded"
-            placeholder="Giảm giá (VNĐ)"
+            placeholder="Nhập số tiền giảm giá..."
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
           />
@@ -259,8 +261,8 @@ export default function AddOrderForm({ onClose, onSuccess }) {
 
         {/* PREVIEW TOTAL */}
         <div className="mt-4 font-bold text-right">
-          Tạm tính: {totalPreview.toLocaleString()}đ
-        </div>
+          Tổng cộng: {totalPreview.toLocaleString()}đ
+      </div>
 
         {/* ACTIONS */}
         <div className="flex justify-end gap-2 mt-4">
