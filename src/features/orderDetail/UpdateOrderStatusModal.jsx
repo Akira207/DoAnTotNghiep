@@ -110,16 +110,19 @@ export default function UpdateOrderStatusModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block p-3 text-xs font-bold uppercase text-on-surface-variant mb-1.5">
-                Số tiền thanh toán
+                Số tiền thanh toán thêm
               </label>
 
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Nhập số tiền..."
+                placeholder="Nhập số tiền trả thêm (nếu có)..."
                 className="w-full bg-surface-container-low p-3 border-outline-variant/30 rounded-lg text-sm focus:border-primary focus:ring-primary"
               />
+              <p className="text-[10px] text-on-surface-variant mt-1 px-1">
+                Chỉ nhập số tiền thanh toán mới, không nhập lại tiền đặt cọc.
+              </p>
             </div>
 
             <div>

@@ -8,13 +8,13 @@ export default function OrderItemsSection({
   const total = order?.totalAmount || 0;
   const deposit = order?.depositAmount || 0;
 
-  // Tính tổng số tiền đã thanh toán từ mảng payment
+  // Tính tổng số tiền đã thanh toán từ mảng payment (bao gồm cả đặt cọc)
   const totalPaid = Array.isArray(payment)
     ? payment.reduce((sum, p) => sum + (p.amount || 0), 0)
     : payment?.amount || 0;
 
-  // Tính số tiền còn lại phải thu: Tổng - Cọc - Tổng đã thanh toán
-  const remaining = total - deposit - totalPaid;
+  // Tính số tiền còn lại phải thu: Tổng đơn hàng - Tổng đã thanh toán
+  const remaining = total - totalPaid;
 
   const formatPrice = (value) =>
     (value || 0).toLocaleString("vi-VN") + "đ";

@@ -7,18 +7,29 @@ import ReportsStats from "../features/resports/ReportsStats";
 import RevenueChart from "../features/resports/RevenueChart";
 import OrderStatusChart from "../features/resports/OrderStatusChart";
 import ProductionOrdersTable from "../features/resports/ProductionOrdersTable";
+import ProductionDetailModal from "../features/production/ProductionDetailModal";
 
-import { getOrders } from "../services/orderService";
-import { getProductionTasks } from "../services/productionService";
+import {
+  getGeneralStats,
+  getRevenueData,
+  getProductionReport,
+  getOrderStatusDistribution,
+} from "../services/reportService";
 
 export default function ReportsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [reportsData, setReportsData] = useState({
-    orders: [],
+    stats: null,
+    revenue: [],
+    statusDistribution: {},
     productionTasks: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Modal state
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
@@ -34,15 +45,19 @@ export default function ReportsPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      const [ordersData, tasksData] = await Promise.all([
-        getOrders().catch(() => []),
-        getProductionTasks().catch(() => []),
+
+      const [stats, revenue, statusDist, tasks] = await Promise.all([
+        getGeneralStats(),
+        getRevenueData(),
+        getOrderStatusDistribution(),
+        getProductionReport(),
       ]);
 
       setReportsData({
-        orders: Array.isArray(ordersData) ? ordersData : [],
-        productionTasks: Array.isArray(tasksData) ? tasksData : [],
+        stats,
+        revenue,
+        statusDistribution: statusDist,
+        productionTasks: tasks,
       });
     } catch (err) {
       console.error("Fetch reports error:", err);
@@ -50,6 +65,16 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenDetail = (task) => {
+    setSelectedTask(task);
+    setIsDetailOpen(true);
+  };
+
+  const handleCloseDetail = () => {
+    setIsDetailOpen(false);
+    setSelectedTask(null);
   };
 
   return (
@@ -91,21 +116,32 @@ export default function ReportsPage() {
         {!loading && (
           <>
             {/* stats */}
-            <ReportsStats data={reportsData} />
+            <ReportsStats data={reportsData.stats} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Revenue */}
-              <RevenueChart data={reportsData} />
+              <RevenueChart data={reportsData.revenue} />
 
               {/* Order status chart */}
-              <OrderStatusChart data={reportsData} />
+              <OrderStatusChart data={reportsData.statusDistribution} />
             </div>
 
             {/* Production orders table */}
-            <ProductionOrdersTable tasks={reportsData.productionTasks} />
+            <ProductionOrdersTable
+              tasks={reportsData.productionTasks}
+              onDetail={handleOpenDetail}
+            />
           </>
         )}
       </main>
+
+      {/* Detail Modal */}
+      <ProductionDetailModal
+        isOpen={isDetailOpen}
+        onClose={handleCloseDetail}
+        item={selectedTask}
+        onUpdated={fetchReportsData}
+      />
     </div>
   );
 }

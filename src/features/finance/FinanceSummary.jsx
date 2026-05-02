@@ -3,20 +3,28 @@ export default function FinanceSummary({ data = {} }) {
 
   // Calculate financial metrics
   const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-  const totalPaid = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-  const totalReceivable = totalRevenue - totalPaid;
-  
+  const totalIncome = payments
+    .filter(p => !p.type || p.type === "income")
+    .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const totalExpense = payments
+    .filter(p => p.type === "expense")
+    .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const netBalance = totalIncome - totalExpense;
+
   // Calculate monthly income
   const currentMonth = new Date().getMonth();
-  const monthlyIncome = orders
-    .filter(o => new Date(o.createdAt).getMonth() === currentMonth)
-    .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const monthlyIncome = payments
+    .filter(p => (!p.type || p.type === "income") && new Date(p.createdAt).getMonth() === currentMonth)
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const monthlyExpense = payments
-    .filter(p => new Date(p.createdAt).getMonth() === currentMonth)
+    .filter(p => p.type === "expense" && new Date(p.createdAt).getMonth() === currentMonth)
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const profitMargin = totalRevenue > 0 ? ((totalRevenue - (totalRevenue * 0.6)) / totalRevenue * 100).toFixed(1) : 0;
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -40,10 +48,7 @@ export default function FinanceSummary({ data = {} }) {
           </p>
 
           <h3 className="text-5xl font-black mt-2 tracking-tighter">
-            {(totalReceivable / 1e9).toFixed(2)}{" "}
-            <span className="text-xl font-normal opacity-70">
-              Tỷ VND
-            </span>
+            {formatCurrency(netBalance)}
           </h3>
 
           <div className="mt-8 flex gap-8">
@@ -60,7 +65,7 @@ export default function FinanceSummary({ data = {} }) {
                 <p className="text-[10px] opacity-70 uppercase">
                   Tiền vào tháng này
                 </p>
-                <p className="font-bold">+{(monthlyIncome / 1e9).toFixed(2)}B</p>
+                <p className="font-bold text-green-600">+{formatCurrency(monthlyIncome)}</p>
               </div>
             </div>
 
@@ -76,7 +81,7 @@ export default function FinanceSummary({ data = {} }) {
                 <p className="text-[10px] opacity-70 uppercase">
                   Tiền ra tháng này
                 </p>
-                <p className="font-bold text-on-error">-{(monthlyExpense / 1e9).toFixed(2)}B</p>
+                <p className="font-bold text-red-600">-{formatCurrency(monthlyExpense)}</p>
               </div>
             </div>
 
@@ -106,7 +111,7 @@ export default function FinanceSummary({ data = {} }) {
           </p>
 
           <h4 className="text-3xl font-bold text-on-surface mt-1">
-            {((totalRevenue - monthlyExpense) / 1e9).toFixed(2)}B
+            {formatCurrency(totalIncome - totalExpense)}
           </h4>
         </div>
 

@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const getStatusColor = (status) => {
   switch (status) {
     case "completed":
@@ -8,6 +10,8 @@ const getStatusColor = (status) => {
       return { bg: "bg-secondary-container/30", text: "text-secondary", label: "Thiết kế" };
     case "paused":
       return { bg: "bg-error-container/20", text: "text-error", label: "Tạm dừng" };
+    case "waiting_payment":
+      return { bg: "bg-error-container/20", text: "text-error", label: "Chờ thanh toán" };
     default:
       return { bg: "bg-surface-container/30", text: "text-on-surface-variant", label: status };
   }
@@ -23,10 +27,16 @@ const getInitials = (name = "") => {
 };
 
 const NewOrdersTable = ({ orders = [] }) => {
-  // Show only last 5 orders
-  const displayOrders = orders.slice(0, 5);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  if (!displayOrders.length) {
+  // Pagination logic
+  const totalPages = Math.ceil(orders.length / PAGE_SIZE);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
+  const displayOrders = orders.slice(startIndex, endIndex);
+
+  if (!orders.length) {
     return (
       <>
         <div className="px-8 py-6 border-b border-surface-container flex justify-between items-center">
@@ -80,7 +90,8 @@ const NewOrdersTable = ({ orders = [] }) => {
           <tbody className="divide-y divide-surface-container">
             {displayOrders.map((order) => {
               const statusInfo = getStatusColor(order.status);
-              const initials = getInitials(order.customerName || "");
+              const customerName = order.customerId?.name || "N/A";
+              const initials = getInitials(customerName);
 
               return (
                 <tr key={order._id} className="hover:bg-surface-container-low/50 transition-colors">
@@ -93,7 +104,7 @@ const NewOrdersTable = ({ orders = [] }) => {
                         {initials || "?"}
                       </div>
                       <span className="font-semibold text-sm">
-                        {order.customerName || "N/A"}
+                        {customerName}
                       </span>
                     </div>
                   </td>
@@ -114,6 +125,30 @@ const NewOrdersTable = ({ orders = [] }) => {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="px-8 py-4 border-t border-surface-container flex justify-between items-center bg-slate-50/50">
+          <p className="text-xs text-on-surface-variant font-medium">
+            Trang {currentPage} / {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-xs font-bold rounded-sm border border-surface-container bg-white disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-xs font-bold rounded-sm border border-surface-container bg-white disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

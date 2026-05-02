@@ -20,7 +20,7 @@ export const protectedRoutes = [
   { path: "/dashboard", element: <DashboardPage />, roles: ["admin", "accountant"] },
   { path: "/orders", element: <OrdersPage />, roles: ["admin", "accountant"] },
   { path: "/production", element: <ProductionPage />, roles: ["admin", "worker", "accountant"] },
-  { path: "/orders/:id", element: <OrderDetailPage />, roles: ["admin", "staff"],},
+  { path: "/orders/:id", element: <OrderDetailPage />, roles: ["admin", "staff", "accountant"],},
   // { path: "/orders/order-detail", element: <OrderDetailPage />, roles: ["admin", "staff"],}, //test
 
 

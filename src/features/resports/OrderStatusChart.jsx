@@ -1,22 +1,10 @@
 export default function OrderStatusChart({ data = {} }) {
-  const { orders = [] } = data;
-
-  // Calculate status distribution from actual orders
   const statusCounts = {
-    "in-progress": 0,
-    "pending": 0,
-    "completed": 0,
-    "paused": 0,
+    "in-progress": data["in-progress"] || 0,
+    "pending": data["pending"] || 0,
+    "completed": data["completed"] || 0,
+    "cancelled": data["cancelled"] || 0,
   };
-
-  orders.forEach(order => {
-    const status = order.status || "pending";
-    if (statusCounts[status] !== undefined) {
-      statusCounts[status]++;
-    } else {
-      statusCounts["pending"]++;
-    }
-  });
 
   const total = Object.values(statusCounts).reduce((a, b) => a + b, 0) || 1;
 
@@ -41,13 +29,12 @@ export default function OrderStatusChart({ data = {} }) {
     },
     {
       label: "Huỷ",
-      value: statusCounts["paused"],
-      percent: Math.round((statusCounts["paused"] / total) * 100),
+      value: statusCounts["cancelled"],
+      percent: Math.round((statusCounts["cancelled"] / total) * 100),
       color: "#94A3B8",
     },
   ];
 
-  // build conic-gradient string
   let current = 0;
   const gradient = data_chart
     .map((item) => {
@@ -68,16 +55,13 @@ export default function OrderStatusChart({ data = {} }) {
         Phân bổ {total} đơn hàng hiện tại
       </p>
 
-      {/* Donut */}
       <div className="relative w-48 h-48 mx-auto mb-10 flex items-center justify-center">
         <div
           className="absolute inset-0 rounded-full"
           style={{
             background: `conic-gradient(${gradient})`,
-            maskImage:
-              "radial-gradient(circle, transparent 65%, black 65%)",
-            WebkitMaskImage:
-              "radial-gradient(circle, transparent 65%, black 65%)",
+            maskImage: "radial-gradient(circle, transparent 65%, black 65%)",
+            WebkitMaskImage: "radial-gradient(circle, transparent 65%, black 65%)",
           }}
         />
 
@@ -91,7 +75,6 @@ export default function OrderStatusChart({ data = {} }) {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="space-y-3">
         {data_chart.map((item, index) => (
           <div

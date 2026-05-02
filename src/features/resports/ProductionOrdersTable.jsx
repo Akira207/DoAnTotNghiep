@@ -39,7 +39,7 @@ const getStatusLabel = (status) => {
   return statusMap[status]?.label || "Chờ xử lý";
 };
 
-export default function ProductionOrdersTable({ tasks = [] }) {
+export default function ProductionOrdersTable({ tasks = [], onDetail }) {
   if (!tasks.length) {
     return (
       <section className="mt-8 bg-white rounded-sm shadow-sm overflow-hidden p-6 text-center">
@@ -83,6 +83,9 @@ export default function ProductionOrdersTable({ tasks = [] }) {
               <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">
                 Trạng thái
               </th>
+              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap text-center">
+                Thao tác
+              </th>
             </tr>
           </thead>
 
@@ -97,7 +100,7 @@ export default function ProductionOrdersTable({ tasks = [] }) {
                 </td>
 
                 <td className="px-6 py-4 text-sm font-medium text-slate-900 whitespace-nowrap">
-                  {task.taskName || task.productName || "Sản phẩm"}
+                  {task.productName || "Sản phẩm"}
                 </td>
 
                 <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
@@ -116,6 +119,15 @@ export default function ProductionOrdersTable({ tasks = [] }) {
                   >
                     {getStatusLabel(task.status)}
                   </span>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <button
+                    onClick={() => onDetail?.(task)}
+                    className="px-3 py-1 text-xs font-bold text-white bg-[#0058BA] rounded-sm hover:bg-[#004a9d] transition-colors"
+                  >
+                    Chi tiết
+                  </button>
                 </td>
               </tr>
             ))}

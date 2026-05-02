@@ -22,31 +22,42 @@ const statusMap = {
 };
 
 const getStatus = (item) => {
+  console.log("Warehouse Item Data:", item);
   const { quantity, reservedQuantity, status: itemStatus } = item;
 
-  if (itemStatus === "ready_to_ship" || reservedQuantity > 0) {
-    const label =
-      reservedQuantity === quantity
+  let baseStatus = {
+    label: "",
+    className: "bg-surface-container/30 text-on-surface-variant",
+  };
+
+  // 1. Determine Base Stock Status
+  if (itemStatus) {
+    const key = itemStatus.toLowerCase().replace(" ", "_");
+    baseStatus = statusMap[key] || {
+      label: itemStatus,
+      className: "bg-surface-container/30 text-on-surface-variant",
+    };
+  } else if (quantity < 10) {
+    baseStatus = statusMap.low_stock;
+  } else {
+    baseStatus = statusMap.in_stock;
+  }
+
+  // 2. Check for "Ready to Ship" (Reserved) status
+  if (itemStatus === "ready_to_ship" || reservedQuantity !== 0) {
+    const shipLabel =
+      Math.abs(reservedQuantity) === quantity
         ? "Sẵn sàng giao"
-        : `Sẵn sàng giao (${reservedQuantity}/${quantity})`;
+        : `(${Math.abs(reservedQuantity)}/${quantity})`;
+
+    // Combine base status and shipping status
     return {
-      label,
-      className: "bg-tertiary/10 text-tertiary",
+      label: `${baseStatus.label} - ${shipLabel}`,
+      className: "bg-tertiary/10 text-tertiary", // Use the tertiary color for combined status
     };
   }
 
-  if (itemStatus) {
-    const key = itemStatus.toLowerCase().replace(" ", "_");
-    return (
-      statusMap[key] || {
-        label: itemStatus,
-        className: "bg-surface-container/30 text-on-surface-variant",
-      }
-    );
-  }
-
-  if (quantity < 10) return statusMap.low_stock;
-  return statusMap.in_stock;
+  return baseStatus;
 };
 
 export default function WarehouseTable({

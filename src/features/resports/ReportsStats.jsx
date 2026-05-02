@@ -1,12 +1,11 @@
 export default function ReportsStats({ data = {} }) {
-  const { orders = [], productionTasks = [] } = data;
-
-  // Calculate stats from real data
-  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-  const totalCost = productionTasks.reduce((sum, task) => sum + (task.estimatedCost || 0), 0);
-  const profit = totalRevenue - totalCost;
-  const totalOrders = orders.length;
-  const totalCustomers = new Set(orders.map(o => o.customerId)).size;
+  const {
+    totalRevenue = 0,
+    totalCost = 0,
+    totalOrders = 0,
+    totalCustomers = 0,
+    profit = 0,
+  } = data || {};
 
   const stats = [
     {
@@ -17,7 +16,7 @@ export default function ReportsStats({ data = {} }) {
       color: "text-[#0058BA]",
       bg: "bg-blue-50",
       border: "border-[#0058BA]",
-      growth: `+${Math.floor((profit / totalRevenue) * 100) || 0}%`,
+      growth: `+${Math.floor((profit / (totalRevenue || 1)) * 100) || 0}%`,
       growthColor: "text-green-600",
       growthBg: "bg-green-50",
     },
@@ -59,7 +58,6 @@ export default function ReportsStats({ data = {} }) {
       border: "border-purple-500",
     },
   ];
-
   return (
     <section className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
       {stats.map((item, index) => (
@@ -67,15 +65,10 @@ export default function ReportsStats({ data = {} }) {
           key={index}
           className={`bg-white p-6 rounded-sm shadow-sm flex flex-col justify-between border-l-4 ${item.border}`}
         >
-          {/* top */}
           <div className="flex justify-between items-start mb-4">
             <span className={`p-2 rounded-sm ${item.bg} ${item.color}`}>
-              <span className="material-symbols-outlined">
-                {item.icon}
-              </span>
+              <span className="material-symbols-outlined">{item.icon}</span>
             </span>
-
-            {/* growth */}
             {item.growth && (
               <span
                 className={`text-[10px] font-bold flex items-center px-2 py-0.5 rounded-full ${item.growthColor} ${item.growthBg}`}
@@ -87,13 +80,10 @@ export default function ReportsStats({ data = {} }) {
               </span>
             )}
           </div>
-
-          {/* content */}
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
               {item.title}
             </p>
-
             <h3
               className={`text-2xl font-black tracking-tighter ${
                 item.highlight ? "text-green-600" : "text-slate-900"
