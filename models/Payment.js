@@ -5,13 +5,20 @@ const paymentSchema = new mongoose.Schema(
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
-      required: true,
+      required: false,
     },
 
     amount: {
       type: Number,
       required: true,
       default: 0,
+    },
+
+    type: {
+      type: String,
+      enum: ["income", "expense"],
+      required: true,
+      default: "income",
     },
 
     paymentDate: {
@@ -23,6 +30,12 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       enum: ["cash", "card", "bank"],
       default: "cash",
+    },
+
+    materialImportId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MaterialImport",
+      required: false,
     },
 
     status: {

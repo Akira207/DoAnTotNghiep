@@ -1,4 +1,5 @@
 import MaterialImport from "../models/MaterialImport.js";
+import Payment from "../models/Payment.js";
 import {
   successResponse,
   createdResponse,
@@ -9,7 +10,7 @@ import {
 
 /* =========================
    CREATE
-========================= */
+   ========================= */
 export const createMaterialImport = async (req, res) => {
   try {
     const {
@@ -44,15 +45,29 @@ export const createMaterialImport = async (req, res) => {
 
     const saved = await item.save();
 
-    return createdResponse(res, saved, "Material import created successfully");
+    // ✅ Tự động tạo Payment cho lịch sử nhập kho
+    const totalAmount = Number(quantity) * Number(price) || 0;
+    console.log(`Creating payment for material import. Amount: ${totalAmount}`);
+    await new Payment({
+      amount: totalAmount,
+      type: "expense",
+      paymentMethod: "bank", // mặc định chuyển khoản
+      paymentDate: new Date(),
+      status: "completed",
+      orderId: null, // Không gắn với đơn hàng cụ thể
+      materialImportId: saved._id, // Gắn với bản ghi nhập kho
+    }).save();
+
+    return createdResponse(res, saved, "Material import and corresponding payment created successfully");
   } catch (error) {
+    console.error("CREATE MATERIAL IMPORT ERROR:", error);
     return errorResponse(res, 500, error.message);
   }
 };
 
 /* =========================
    GET ALL (SEARCH + FILTER + PAGINATION)
-========================= */
+   ========================= */
 export const getAllMaterialImports = async (req, res) => {
   try {
     const {
@@ -116,7 +131,7 @@ export const getAllMaterialImports = async (req, res) => {
 
 /* =========================
    GET BY ID
-========================= */
+   ========================= */
 export const getMaterialImportById = async (req, res) => {
   try {
     const item = await MaterialImport.findById(req.params.id);
@@ -133,7 +148,7 @@ export const getMaterialImportById = async (req, res) => {
 
 /* =========================
    UPDATE
-========================= */
+   ========================= */
 export const updateMaterialImport = async (req, res) => {
   try {
     const {
@@ -174,6 +189,15 @@ export const updateMaterialImport = async (req, res) => {
       return notFound(res, "Material import not found");
     }
 
+    // ✅ Cập nhật lại Payment tương ứng nếu quantity hoặc price thay đổi
+    if (quantity !== undefined || price !== undefined) {
+      const newTotal = Number(updated.quantity) * Number(updated.price) || 0;
+      await Payment.findOneAndUpdate(
+        { materialImportId: updated._id },
+        { amount: newTotal }
+      );
+    }
+
     return successResponse(res, updated, "Material import updated successfully");
   } catch (error) {
     return errorResponse(res, 500, error.message);
@@ -182,7 +206,7 @@ export const updateMaterialImport = async (req, res) => {
 
 /* =========================
    DELETE
-========================= */
+   ========================= */
 export const deleteMaterialImport = async (req, res) => {
   try {
     const deleted = await MaterialImport.findByIdAndDelete(req.params.id);

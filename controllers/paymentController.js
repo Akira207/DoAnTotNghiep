@@ -23,6 +23,7 @@ export const createPayment = async (req, res) => {
     const payment = new Payment({
       orderId,
       amount,
+      type: "income",
       paymentMethod,
       paymentDate: new Date(),
       status: status || "pending",
@@ -60,7 +61,17 @@ export const createPayment = async (req, res) => {
 export const getAllPayments = async (req, res) => {
   try {
     const payments = await Payment.find().populate("orderId");
-    return successResponse(res, payments, "Payments fetched successfully");
+
+    const result = payments.map(p => {
+      const paymentObj = p.toObject();
+      // Nếu không có orderId, chúng ta có thể gắn một nhãn mô tả hoặc để trống
+      if (!paymentObj.orderId) {
+        paymentObj.isExpense = true; // Đánh dấu là chi phí nhập kho
+      }
+      return paymentObj;
+    });
+
+    return successResponse(res, result, "Payments fetched successfully");
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }

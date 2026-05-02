@@ -36,11 +36,11 @@ export const getAllCustomers = async (req, res) => {
     const customersWithDebt = await Promise.all(
       customers.map(async (c) => {
         const orders = await Order.find({
-          customer: c._id,
+          customerId: c._id,
           status: { $ne: "completed" }, // chưa hoàn thành
         });
 
-        const debt = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const debt = orders.reduce((sum, o) => sum + (o.remainingAmount || 0), 0);
 
         return {
           ...c.toObject(),

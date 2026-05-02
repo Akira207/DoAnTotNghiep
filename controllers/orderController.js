@@ -14,13 +14,9 @@ import {
   errorResponse,
 } from "../utils/apiResponse.js";
 
-/* =========================
-   CREATE FULL ORDER
-========================= */
 export const createFullOrder = async (req, res) => {
   try {
     const { customerId, products, payment, note, discount } = req.body;
-
     if (!customerId || !Array.isArray(products) || products.length === 0) {
       return badRequest(res, "Missing required data");
     }
@@ -73,28 +69,27 @@ export const createFullOrder = async (req, res) => {
           status: "pending",
         }).save();
       } else if (item.source === "warehouse") {
-        // ✅ Logic giữ hàng trong kho
-        const warehouseItem = await Warehouse.findOne({ productId: item.productId });
+        const warehouseItem = await Warehouse.findOne({
+          productId: item.productId,
+        });
         if (!warehouseItem || warehouseItem.quantity < item.quantity) {
           await Order.findByIdAndDelete(order._id);
-          return badRequest(res, `Sản phẩm ${item.productId} không đủ số lượng trong kho`);
+          return badRequest(
+            res,
+            `Sản phẩm ${item.productId} không đủ số lượng trong kho`,
+          );
         }
 
         warehouseItem.reservedQuantity += item.quantity;
 
-        // Cập nhật trạng thái kho
-        if (warehouseItem.reservedQuantity === warehouseItem.quantity) {
+        if (warehouseItem.reservedQuantity > 0) {
           warehouseItem.status = "ready_to_ship";
-        } else if (warehouseItem.reservedQuantity > 0) {
-          // Vẫn giữ status cũ nhưng đã có hàng chờ giao
-          // Có thể tùy chỉnh thêm logic low_stock ở đây nếu cần
         }
 
         await warehouseItem.save();
       }
     }
 
-    // ✅ Tính toán chi tiết
     const total = totalAmount - (Number(discount) || 0);
 
     const depositAmount = payment?.amount || 0;
@@ -120,24 +115,25 @@ export const createFullOrder = async (req, res) => {
       }).save();
     }
 
-    return createdResponse(res, {
-      orderId: order._id,
-      orderCode,
-      subtotal: order.subtotal,
-      totalAmount: order.totalAmount,
-      depositAmount: order.depositAmount,
-      remainingAmount: order.remainingAmount,
-      payment: savedPayment,
-    }, "Order created successfully");
+    return createdResponse(
+      res,
+      {
+        orderId: order._id,
+        orderCode,
+        subtotal: order.subtotal,
+        totalAmount: order.totalAmount,
+        depositAmount: order.depositAmount,
+        remainingAmount: order.remainingAmount,
+        payment: savedPayment,
+      },
+      "Order created successfully",
+    );
   } catch (error) {
     console.error("CREATE ORDER ERROR:", error);
     return errorResponse(res, 500, error.message);
   }
 };
 
-/* =========================
-   GET ALL ORDERS
-========================= */
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
@@ -150,9 +146,6 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-/* =========================
-   GET ORDER BY ID
-========================= */
 export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate("customerId");
@@ -161,37 +154,37 @@ export const getOrderById = async (req, res) => {
       return notFound(res, "Order not found");
     }
 
-    // ✅ Chạy song song để tối ưu
     const [detailsRaw, payments] = await Promise.all([
       OrderDetail.find({ orderId: order._id }).populate("productId"),
       Payment.find({ orderId: order._id }),
     ]);
 
-    // Gắn trạng thái sản xuất cho từng chi tiết đơn hàng
     const details = await Promise.all(
       detailsRaw.map(async (detail) => {
-        const task = await ProductionTask.findOne({ orderDetailId: detail._id });
+        const task = await ProductionTask.findOne({
+          orderDetailId: detail._id,
+        });
         return {
           ...detail.toObject(),
           productionStatus: task ? task.status : "no_task",
         };
-      })
+      }),
     );
 
-    return successResponse(res, { order, details, payment: payments }, "Order fetched successfully");
+    return successResponse(
+      res,
+      { order, details, payment: payments },
+      "Order fetched successfully",
+    );
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }
 };
 
-/* =========================
-   UPDATE ORDER STATUS (FIXED)
-========================= */
 export const updateOrder = async (req, res) => {
   try {
     const { status, note } = req.body;
 
-    // ✅ danh sách trạng thái hợp lệ
     const validStatus = [
       "pending",
       "producing",
@@ -205,14 +198,12 @@ export const updateOrder = async (req, res) => {
       return badRequest(res, "Invalid status");
     }
 
-    // tìm order
     const order = await Order.findById(req.params.id);
 
     if (!order) {
       return notFound(res, "Order not found");
     }
 
-    // ✅ flow chuẩn
     const flow = [
       "pending",
       "producing",
@@ -224,12 +215,10 @@ export const updateOrder = async (req, res) => {
     const currentIndex = flow.indexOf(order.status);
     const newIndex = flow.indexOf(status);
 
-    // ❌ không cho quay ngược (trừ cancel)
     if (status !== "cancelled" && newIndex < currentIndex) {
       return badRequest(res, "Không thể quay lại trạng thái trước");
     }
 
-    // ❌ không cho completed nếu chưa thanh toán
     if (status === "completed") {
       const payments = await Payment.find({ orderId: order._id });
       const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -239,7 +228,6 @@ export const updateOrder = async (req, res) => {
       }
     }
 
-    // ✅ CHECK TIẾN ĐỘ SẢN XUẤT
     if (["transporting", "completed", "waiting_payment"].includes(status)) {
       const pendingTasks = await ProductionTask.find({
         orderId: order._id,
@@ -247,30 +235,34 @@ export const updateOrder = async (req, res) => {
       });
 
       if (pendingTasks.length > 0) {
-        return badRequest(res, "Không thể cập nhật vì có sản phẩm chưa hoàn thành sản xuất");
+        return badRequest(
+          res,
+          "Không thể cập nhật vì có sản phẩm chưa hoàn thành sản xuất",
+        );
       }
     }
 
     const oldStatus = order.status;
     const newStatus = status;
 
-    // ✅ Logic xử lý kho hàng khi cập nhật trạng thái đơn hàng
     const details = await OrderDetail.find({ orderId: order._id });
 
     if (details && details.length > 0) {
       for (const detail of details) {
-        const warehouseItem = await Warehouse.findOne({ productId: detail.productId });
+        const warehouseItem = await Warehouse.findOne({
+          productId: detail.productId,
+        });
         if (warehouseItem) {
           if (newStatus === "transporting" || newStatus === "completed") {
             // Nếu trước đó chưa trừ kho (chưa từng ở trạng thái vận chuyển/hoàn thành)
             if (oldStatus !== "transporting" && oldStatus !== "completed") {
               warehouseItem.quantity -= detail.quantity;
-              warehouseItem.reservedQuantity -= detail.quantity;
+              warehouseItem.reservedQuantity = Math.max(0, warehouseItem.reservedQuantity - detail.quantity);
 
               // Cập nhật trạng thái kho sau khi trừ
               if (warehouseItem.quantity <= 0) {
                 warehouseItem.status = "out_of_stock";
-              } else if (warehouseItem.quantity < 10) { // Ví dụ ngưỡng low_stock là 10
+              } else if (warehouseItem.quantity < 10) {
                 warehouseItem.status = "low_stock";
               } else {
                 warehouseItem.status = "in_stock";
@@ -309,9 +301,6 @@ export const updateOrder = async (req, res) => {
   }
 };
 
-/* =========================
-   DELETE ORDER
-========================= */
 export const deleteOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -339,3 +328,4 @@ export const deleteOrder = async (req, res) => {
     return errorResponse(res, 500, error.message);
   }
 };
+
