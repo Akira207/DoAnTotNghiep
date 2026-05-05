@@ -33,7 +33,7 @@ export default function FinancePage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [ordersData, paymentsData] = await Promise.all([
         getOrders().catch(() => []),
         getPayments().catch(() => []),
@@ -53,7 +53,6 @@ export default function FinancePage() {
 
   return (
     <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
-      {/* Overlay */}
       <div
         onClick={toggleSidebar}
         className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition-all duration-300
@@ -67,9 +66,7 @@ export default function FinancePage() {
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
-      {/* Main Content */}
       <main className="md:ml-[280px] min-h-screen p-4 md:p-10">
-        {/* Page Header */}
         <FinanceHeader />
 
         {error && (
@@ -85,16 +82,16 @@ export default function FinancePage() {
         )}
 
         {!loading && (
-          <>
-            {/* Summary */}
+          <div>
             <FinanceSummary data={financeData} />
 
-            {/* Revenue Chart */}
             <RevenueChart data={financeData} />
 
-            {/* Recent Transactions */}
-            <RecentTransactions payments={financeData.payments} />
-          </>
+            <RecentTransactions
+              payments={financeData.payments}
+              orders={financeData.orders}
+            />
+          </div>
         )}
       </main>
     </div>

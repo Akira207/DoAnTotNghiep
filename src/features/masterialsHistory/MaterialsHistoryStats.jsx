@@ -1,21 +1,33 @@
-export default function MaterialsHistoryStats({ items = [] }) {
-  // Calculate stats from material imports
-  const totalValue = items.reduce((sum, item) => sum + (item.totalCost || 0), 0);
+export default function MaterialsHistoryStats({ items = [], totalValue: externalTotalValue }) {
+  const totalValue = externalTotalValue !== undefined ? externalTotalValue : items.reduce(
+    (sum, item) => sum + (item.totalCost || 0),
+    0,
+  );
   const totalImports = items.length;
   const priorityMaterial = items.length > 0 ? items[0] : null;
-  
-  const monthlyChange = Math.floor((items.length / Math.max(1, items.length - 1)) * 12) || 0;
+
+  const monthlyChange =
+    Math.floor((items.length / Math.max(1, items.length - 1)) * 12) || 0;
+
+  const formatValue = (val) => {
+    if (val >= 1e9) {
+      return (val / 1e9).toFixed(2) + " tỷ đ";
+    } else if (val >= 1e6) {
+      return (val / 1e6).toFixed(2) + " triệu đ";
+    } else {
+      return val.toLocaleString("vi-VN") + " đ";
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      {/* Tổng giá trị nhập */}
       <div className="md:col-span-1 bg-surface-container-lowest p-6 rounded-xl shadow-sm border-l-4 border-primary">
         <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-1">
           Tổng giá trị nhập
         </p>
 
         <p className="text-2xl font-black text-on-surface tracking-tight">
-          {(totalValue / 1e9).toFixed(2)}B đ
+          {formatValue(totalValue)}
         </p>
 
         <div className="mt-2 flex items-center text-tertiary font-bold text-xs">
@@ -26,7 +38,6 @@ export default function MaterialsHistoryStats({ items = [] }) {
         </div>
       </div>
 
-      {/* Số lượt nhập */}
       <div className="md:col-span-1 bg-surface-container-lowest p-6 rounded-xl shadow-sm">
         <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-1">
           Số lượt nhập kho
@@ -37,11 +48,14 @@ export default function MaterialsHistoryStats({ items = [] }) {
         </p>
 
         <div className="mt-2 text-slate-400 text-xs font-medium">
-          Cập nhật lúc {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+          Cập nhật lúc{" "}
+          {new Date().toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </div>
       </div>
 
-      {/* Vật liệu ưu tiên */}
       <div className="md:col-span-2 bg-secondary-container p-6 rounded-xl shadow-sm flex justify-between items-center relative overflow-hidden">
         <div className="z-10">
           <p className="text-xs font-bold text-on-secondary-container tracking-widest uppercase mb-1">

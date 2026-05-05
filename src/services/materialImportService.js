@@ -15,8 +15,7 @@ export const getMaterialImports = async (search = "", page = 1) => {
     },
   });
 
-  const data = res.data;
-  return data.data || data;
+  return res.data.data;
 };
 
 // GET MATERIAL IMPORT BY ID

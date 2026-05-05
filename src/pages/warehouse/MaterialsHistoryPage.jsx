@@ -22,6 +22,7 @@ export default function MaterialsHistoryPage() {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [totalValueAllPages, setTotalValueAllPages] = useState(0);
 
   // SEARCH
   const [keyword, setKeyword] = useState("");
@@ -54,6 +55,7 @@ export default function MaterialsHistoryPage() {
 
       setMaterials(res.data || []);
       setTotalPages(res.totalPages || 1);
+      setTotalValueAllPages(res.totalValueAllPages || 0);
     } catch (err) {
       setError(err.message || "Failed to fetch materials");
       setMaterials([]);
@@ -110,7 +112,10 @@ export default function MaterialsHistoryPage() {
 
           {!loading && (
             <>
-              <MaterialsHistoryStats items={materials} />
+              <MaterialsHistoryStats
+                items={materials}
+                totalValue={totalValueAllPages}
+              />
 
               <MaterialsHistoryTable
                 items={materials}

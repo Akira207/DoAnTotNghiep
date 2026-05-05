@@ -17,7 +17,7 @@ const statusMap = {
   },
   ready_to_ship: {
     label: "Sẵn sàng giao",
-    className: "bg-tertiary/10 text-tertiary",
+    className: "bg-secondary/10 text-secondary",
   },
 };
 
@@ -53,7 +53,7 @@ const getStatus = (item) => {
     // Combine base status and shipping status
     return {
       label: `${baseStatus.label} - ${shipLabel}`,
-      className: "bg-tertiary/10 text-tertiary", // Use the tertiary color for combined status
+      className: "bg-secondary/10 text-secondary", // Use the tertiary color for combined status
     };
   }
 

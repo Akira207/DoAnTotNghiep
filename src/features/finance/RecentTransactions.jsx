@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 const statusMap = {
+  // Payment statuses
   success: {
     label: "Thành công",
     class: "bg-tertiary-container text-on-tertiary-container",
@@ -17,6 +18,23 @@ const statusMap = {
     label: "Chờ xử lý",
     class: "bg-secondary-container text-on-secondary-container",
   },
+  // Order statuses (matched with Order.js model)
+  producing: {
+    label: "Đang sản xuất",
+    class: "bg-secondary-container text-on-secondary-container",
+  },
+  transporting: {
+    label: "Đang vận chuyển",
+    class: "bg-blue-100 text-blue-600",
+  },
+  waiting_payment: {
+    label: "Chờ thanh toán",
+    class: "bg-amber-100 text-amber-600",
+  },
+  cancelled: {
+    label: "Đã hủy",
+    class: "bg-red-100 text-red-600",
+  },
 };
 
 const getStatusInfo = (status) => {
@@ -32,28 +50,46 @@ const formatMoney = (value, type) => {
   return type === "income" ? `+ ${formatted}` : `- ${formatted}`;
 };
 
-export default function RecentTransactions({ payments = [] }) {
+export default function RecentTransactions({ payments = [], orders = [] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
   // Calculate pagination
-  const totalPages = Math.ceil(payments.length / PAGE_SIZE);
+  const sortedPayments = [...payments].sort((a, b) =>
+    new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+  );
+  const totalPages = Math.ceil(sortedPayments.length / PAGE_SIZE);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
 
-  const transactions = payments
+  const transactions = sortedPayments
     .slice(startIndex, endIndex)
-    .map(payment => ({
-      id: payment._id,
-      displayId: payment._id?.substring(0, 6)?.toUpperCase() || "N/A",
-      title: payment.paymentMethod || "Thanh toán",
-      subtitle: payment.note || (payment.type === "expense" ? "Chi phí nhập kho" : "Thu tiền đơn hàng"),
-      method: payment.paymentMethod || "Chuyển khoản",
-      time: new Date(payment.createdAt || new Date()).toLocaleString('vi-VN'),
-      amount: payment.amount || 0,
-      type: payment.type || "income",
-      status: payment.status || "pending",
-    }));
+    .map(payment => {
+      // Nếu payment.orderId là một object (đã được populate), lấy trực tiếp status từ đó
+      // Nếu không, tìm trong mảng orders truyền xuống
+      let finalStatus = payment.status;
+
+      if (payment.orderId && typeof payment.orderId === 'object') {
+        finalStatus = payment.orderId.status || payment.status;
+      } else if (payment.orderId) {
+        const relatedOrder = orders.find(order => String(order._id) === String(payment.orderId));
+        if (relatedOrder) {
+          finalStatus = relatedOrder.status;
+        }
+      }
+
+      return {
+        id: payment._id,
+        displayId: payment._id?.substring(0, 6)?.toUpperCase() || "N/A",
+        title: payment.paymentMethod || "Thanh toán",
+        subtitle: payment.note || (payment.type === "expense" ? "Chi phí nhập kho" : "Thu tiền đơn hàng"),
+        method: payment.paymentMethod || "Chuyển khoản",
+        time: new Date(payment.createdAt || new Date()).toLocaleString('vi-VN'),
+        amount: payment.amount || 0,
+        type: payment.type || "income",
+        status: finalStatus || "pending",
+      };
+    });
 
   if (!transactions.length) {
     return (
