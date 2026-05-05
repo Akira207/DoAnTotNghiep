@@ -117,12 +117,26 @@ export const getAllMaterialImports = async (req, res) => {
 
     const total = await MaterialImport.countDocuments(filter);
 
+    // ✅ Tính tổng giá trị của tất cả các bản ghi khớp với filter (không phân trang)
+    const aggregation = await MaterialImport.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalSum: { $sum: { $multiply: ["$quantity", "$price"] } },
+        },
+      },
+    ]);
+
+    const totalValueAllPages = aggregation.length > 0 ? aggregation[0].totalSum : 0;
+
     return successResponse(res, {
       data: list,
       page: pageNumber,
       limit: limitNumber,
       total,
       totalPages: Math.ceil(total / limitNumber),
+      totalValueAllPages,
     });
   } catch (error) {
     return errorResponse(res, 500, error.message);
