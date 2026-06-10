@@ -1,4 +1,6 @@
 import Product from "../models/Product.js";
+import fs from "fs";
+import path from "path";
 import {
   successResponse,
   createdResponse,
@@ -124,11 +126,27 @@ export const updateProduct = async (req, res) => {
 // DELETE PRODUCT
 export const deleteProduct = async (req, res) => {
   try {
-    const deleted = await Product.findByIdAndDelete(req.params.id);
-    if (!deleted) {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
       return notFound(res, "Product not found");
     }
-    return successResponse(res, null, "Product deleted successfully");
+
+    // Xoá các file hình ảnh vật lý
+    if (product.images && product.images.length > 0) {
+      product.images.forEach((imageUrl) => {
+        // Trích xuất filename từ URL (ví dụ: http://localhost:5000/uploads/123.jpg -> uploads/123.jpg)
+        const fileName = imageUrl.split("/uploads/")[1];
+        if (fileName) {
+          const filePath = path.join("uploads", fileName);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        }
+      });
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+    return successResponse(res, null, "Product and associated images deleted successfully");
   } catch (error) {
     return errorResponse(res, 500, error.message);
   }

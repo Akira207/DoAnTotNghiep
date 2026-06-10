@@ -6,13 +6,14 @@ import {
   updateProductionTask,
   deleteProductionTask
 } from "../controllers/productionTaskController.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createProductionTask);
-router.get("/", getAllProductionTasks);
-router.get("/:id", getProductionTaskById);
-router.put("/:id", updateProductionTask);
-router.delete("/:id", deleteProductionTask);
+router.post("/", protect, authorize("admin", "accountant"), createProductionTask);
+router.get("/", protect, getAllProductionTasks);
+router.get("/:id", protect, getProductionTaskById);
+router.put("/:id", protect, authorize("admin", "worker"), updateProductionTask);
+router.delete("/:id", protect, authorize("admin", "accountant"), deleteProductionTask);
 
 export default router;

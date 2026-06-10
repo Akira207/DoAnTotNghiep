@@ -6,13 +6,14 @@ import {
   updateWarehouse,
   deleteWarehouse
 } from "../controllers/warehouseController.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createWarehouse);
-router.get("/", getAllWarehouse);
-router.get("/:id", getWarehouseById);
-router.put("/:id", updateWarehouse);
-router.delete("/:id", deleteWarehouse);
+router.post("/", protect, authorize("admin", "accountant"), createWarehouse);
+router.get("/", protect, getAllWarehouse);
+router.get("/:id", protect, getWarehouseById);
+router.put("/:id", protect, authorize("admin", "accountant"), updateWarehouse);
+router.delete("/:id", protect, authorize("admin"), deleteWarehouse);
 
 export default router;

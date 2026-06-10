@@ -40,14 +40,17 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "pending", // chờ sản xuất
-        "producing", // đang sản xuất
-        "transporting", // đang vận chuyển
-        "waiting_payment", // chờ thanh toán
-        "completed", // hoàn thành
-        "cancelled", // huỷ
-      ],
+      enum: {
+        values: [
+          "pending", // chờ sản xuất
+          "producing", // đang sản xuất
+          "transporting", // đang vận chuyển
+          "waiting_payment", // chờ thanh toán
+          "completed", // hoàn thành
+          "cancelled", // huỷ
+        ],
+        message: "{VALUE} không phải là trạng thái hợp lệ cho đơn hàng",
+      },
       default: "pending",
     },
 

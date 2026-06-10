@@ -191,6 +191,14 @@ export const updateProductionTask = async (req, res) => {
 
     const oldTask = await ProductionTask.findById(req.params.id);
 
+    if (!oldTask) {
+      return notFound(res, "Production task not found");
+    }
+
+    if (oldTask.status === "completed") {
+      return badRequest(res, "Lệnh sản xuất đã hoàn thành, không thể thay đổi");
+    }
+
     const updated = await ProductionTask.findByIdAndUpdate(
       req.params.id,
       {

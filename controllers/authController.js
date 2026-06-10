@@ -28,12 +28,7 @@ export const login = async (req, res) => {
       return badRequest(res, "Wrong password");
     }
 
-    // 4. check JWT secret
-    if (!process.env.JWT_SECRET) {
-      return errorResponse(res, 500, "JWT_SECRET is not defined in environment");
-    }
-
-    // 5. create token
+    // 4. create token
     const token = jwt.sign(
       {
         id: user._id,
@@ -43,7 +38,7 @@ export const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // 6. response
+    // 5. response
     return successResponse(res, {
       token,
       user: {
@@ -53,6 +48,7 @@ export const login = async (req, res) => {
       },
     }, "Login successful");
   } catch (error) {
-    return errorResponse(res, 500, "Login error");
+    console.error("LOGIN_ERROR:", error);
+    return errorResponse(res, 500, "An unexpected error occurred during login");
   }
 };

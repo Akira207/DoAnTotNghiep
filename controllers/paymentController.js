@@ -38,9 +38,9 @@ export const createPayment = async (req, res) => {
       console.log(`Total paid for order ${order._id}: ${totalPaid}, Total amount: ${order.totalAmount}`);
 
       if (totalPaid >= order.totalAmount) {
-        order.status = "paid";
+        order.status = "pending";
         await order.save();
-        console.log("Order status updated to paid");
+        console.log("Order status updated to pending (paid)");
       }
     } catch (updateErr) {
       console.error("Order status update error:", updateErr);
@@ -102,9 +102,9 @@ export const updatePayment = async (req, res) => {
     // update lại trạng thái order nếu cần
     const order = await Order.findById(updated.orderId);
     if (updated.amount >= order.totalAmount) {
-      order.status = "paid";
+      order.status = "pending";
     } else {
-      order.status = "created";
+      order.status = "waiting_payment";
     }
     await order.save();
     return successResponse(res, updated, "Payment updated successfully");
@@ -129,9 +129,9 @@ export const deletePayment = async (req, res) => {
       totalPaid += p.amount;
     }
     if (totalPaid >= order.totalAmount) {
-      order.status = "paid";
+      order.status = "pending";
     } else {
-      order.status = "created";
+      order.status = "waiting_payment";
     }
     await order.save();
     return successResponse(res, null, "Payment deleted successfully");

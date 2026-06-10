@@ -9,7 +9,20 @@ import {
 // CREATE
 export const createWarehouse = async (req, res) => {
   try {
-    const data = new Warehouse(req.body);
+    const { quantity } = req.body;
+    let status = req.body.status;
+
+    if (quantity !== undefined) {
+      if (quantity === 0) {
+        status = "out_of_stock";
+      } else if (quantity < 10) {
+        status = "low_stock";
+      } else {
+        status = "in_stock";
+      }
+    }
+
+    const data = new Warehouse({ ...req.body, status });
     const saved = await data.save();
     return createdResponse(res, saved, "Warehouse created successfully");
   } catch (error) {
@@ -53,9 +66,24 @@ export const getWarehouseById = async (req, res) => {
 // UPDATE
 export const updateWarehouse = async (req, res) => {
   try {
-    const updated = await Warehouse.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const { quantity } = req.body;
+    let status = req.body.status;
+
+    if (quantity !== undefined) {
+      if (quantity === 0) {
+        status = "out_of_stock";
+      } else if (quantity < 10) {
+        status = "low_stock";
+      } else {
+        status = "in_stock";
+      }
+    }
+
+    const updated = await Warehouse.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, status },
+      { new: true },
+    );
     if (!updated) {
       return notFound(res, "Warehouse not found");
     }

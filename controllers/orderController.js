@@ -204,6 +204,28 @@ export const updateOrder = async (req, res) => {
       return notFound(res, "Order not found");
     }
 
+    if (order.status === "cancelled") {
+      return badRequest(res, "Đơn hàng đã bị huỷ, không thể chỉnh sửa");
+    }
+
+    if (order.status === "completed") {
+      const { reason } = req.body;
+      if (!reason) {
+        return badRequest(res, "Đơn hàng đã hoàn thành, vui lòng cung cấp lý do để chỉnh sửa");
+      }
+    }
+
+    if (order.status === "cancelled") {
+      return badRequest(res, "Đơn hàng đã bị huỷ, không thể chỉnh sửa");
+    }
+
+    if (order.status === "completed") {
+      const { reason } = req.body;
+      if (!reason) {
+        return badRequest(res, "Đơn hàng đã hoàn thành, vui lòng cung cấp lý do để chỉnh sửa");
+      }
+    }
+
     const flow = [
       "pending",
       "producing",
@@ -307,6 +329,10 @@ export const deleteOrder = async (req, res) => {
 
     if (!order) {
       return notFound(res, "Order not found");
+    }
+
+    if (order.status === "completed") {
+      return badRequest(res, "Đơn hàng đã hoàn thành, không thể xoá");
     }
 
     const details = await OrderDetail.find({
