@@ -1,4 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
+import { getCurrentUser } from "../../services/authService";
+import UpdatePaymentStatusModal from "./UpdatePaymentStatusModal";
+
 
 const statusMap = {
   // Payment statuses
@@ -50,11 +53,18 @@ const formatMoney = (value, type) => {
   return type === "income" ? `+ ${formatted}` : `- ${formatted}`;
 };
 
-export default function RecentTransactions({ payments = [], orders = [] }) {
+export default function RecentTransactions({ payments = [], orders = [], onReload }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const user = getCurrentUser();
   const PAGE_SIZE = 10;
 
-  // Calculate pagination
+  const handleOpenDetail = (payment) => {
+    setSelectedPayment(payment);
+    setIsModalOpen(true);
+  };
+
   const sortedPayments = [...payments].sort((a, b) =>
     new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
   );
@@ -65,18 +75,7 @@ export default function RecentTransactions({ payments = [], orders = [] }) {
   const transactions = sortedPayments
     .slice(startIndex, endIndex)
     .map(payment => {
-      // Nếu payment.orderId là một object (đã được populate), lấy trực tiếp status từ đó
-      // Nếu không, tìm trong mảng orders truyền xuống
-      let finalStatus = payment.status;
-
-      if (payment.orderId && typeof payment.orderId === 'object') {
-        finalStatus = payment.orderId.status || payment.status;
-      } else if (payment.orderId) {
-        const relatedOrder = orders.find(order => String(order._id) === String(payment.orderId));
-        if (relatedOrder) {
-          finalStatus = relatedOrder.status;
-        }
-      }
+      const finalStatus = payment.status || "pending";
 
       return {
         id: payment._id,
@@ -87,7 +86,7 @@ export default function RecentTransactions({ payments = [], orders = [] }) {
         time: new Date(payment.createdAt || new Date()).toLocaleString('vi-VN'),
         amount: payment.amount || 0,
         type: payment.type || "income",
-        status: finalStatus || "pending",
+        status: finalStatus,
       };
     });
 
@@ -100,106 +99,124 @@ export default function RecentTransactions({ payments = [], orders = [] }) {
   }
 
   return (
-    <div className="mt-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h5 className="text-xl font-bold text-on-surface">
-          Giao dịch gần đây
-        </h5>
+    <>
+      <div className="mt-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h5 className="text-xl font-bold text-on-surface">
+            Giao dịch gần đây
+          </h5>
 
-        <button className="text-primary font-semibold text-sm hover:underline">
-          Xem tất cả
-        </button>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-surface-container overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4 font-bold">Mã giao dịch</th>
-                <th className="px-6 py-4 font-bold">Nội dung</th>
-                <th className="px-6 py-4 font-bold">Phương thức</th>
-                <th className="px-6 py-4 font-bold">Thời gian</th>
-                <th className="px-6 py-4 font-bold text-right">Số tiền</th>
-                <th className="px-6 py-4 font-bold">Trạng thái</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-surface-container">
-              {transactions.map((t) => (
-                <tr
-                  key={t.id}
-                  className="hover:bg-slate-50 transition-colors"
-                >
-                  <td className="px-6 py-4 font-mono text-xs text-primary font-bold">
-                    #{t.displayId}
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-sm">{t.title}</p>
-                    <p className="text-[10px] text-on-surface-variant">
-                      {t.subtitle}
-                    </p>
-                  </td>
-
-                  <td className="px-6 py-4 text-xs font-medium">
-                    {t.method}
-                  </td>
-
-                  <td className="px-6 py-4 text-xs">
-                    {t.time}
-                  </td>
-
-                  <td
-                    className={`px-6 py-4 text-right font-bold ${
-                      t.type === "income" ? "text-tertiary" : "text-error"
-                    }`}
-                  >
-                    {formatMoney(t.amount, t.type)}
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 text-[10px] font-bold rounded-full ${
-                        getStatusInfo(t.status).class
-                      }`}
-                    >
-                      {getStatusInfo(t.status).label}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <button className="text-primary font-semibold text-sm hover:underline">
+            Xem tất cả
+          </button>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-surface-container flex items-center justify-between bg-slate-50/50">
-            <p className="text-xs text-on-surface-variant font-medium">
-              Trang {currentPage} / {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 text-xs font-bold rounded-sm border border-surface-container bg-white disabled:opacity-50 hover:bg-slate-100 transition-colors"
-              >
-                Trước
-              </button>
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 text-xs font-bold rounded-sm border border-surface-container bg-white disabled:opacity-50 hover:bg-slate-100 transition-colors"
-              >
-                Sau
-              </button>
-            </div>
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-surface-container overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4 font-bold">Mã giao dịch</th>
+                  <th className="px-6 py-4 font-bold">Nội dung</th>
+                  <th className="px-6 py-4 font-bold">Phương thức</th>
+                  <th className="px-6 py-4 font-bold">Thời gian</th>
+                  <th className="px-6 py-4 font-bold text-right">Số tiền</th>
+                  <th className="px-6 py-4 font-bold">Trạng thái</th>
+                  <th className="px-6 py-4 font-bold text-center">Thao tác</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-surface-container">
+                {transactions.map((t) => (
+                  <tr
+                    key={t.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 font-mono text-xs text-primary font-bold">
+                      #{t.displayId}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-sm">{t.title}</p>
+                      <p className="text-[10px] text-on-surface-variant">
+                        {t.subtitle}
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-4 text-xs font-medium">
+                      {t.method}
+                    </td>
+
+                    <td className="px-6 py-4 text-xs">
+                      {t.time}
+                    </td>
+
+                    <td
+                      className={`px-6 py-4 text-right font-bold ${
+                        t.type === "income" ? "text-tertiary" : "text-error"
+                      }`}
+                    >
+                      {formatMoney(t.amount, t.type)}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-3 py-1 text-[10px] font-bold rounded-full ${
+                          getStatusInfo(t.status).class
+                        }`}
+                      >
+                        {getStatusInfo(t.status).label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleOpenDetail(sortedPayments[startIndex + transactions.indexOf(t)])}
+                        className="px-3 py-1 text-xs font-bold text-blue-600 hover:underline"
+                      >
+                        Sửa
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-surface-container flex items-center justify-between bg-slate-50/50">
+              <p className="text-xs text-on-surface-variant font-medium">
+                Trang {currentPage} / {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-xs font-bold rounded-sm border border-surface-container bg-white disabled:opacity-50 hover:bg-slate-100 transition-colors"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-xs font-bold rounded-sm border border-surface-container bg-white disabled:opacity-50 hover:bg-slate-100 transition-colors"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      <UpdatePaymentStatusModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        payment={selectedPayment}
+        onSuccess={onReload}
+      />
+    </>
   );
 }

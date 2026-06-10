@@ -6,7 +6,7 @@ import MobileHeader from "../components/layouts/MobileHeader";
 import OrdersHeader from "../features/orders/OrdersHeader";
 import OrdersFilters from "../features/orders/OrdersFilters";
 import OrderTable from "../features/orders/OrderTable";
-import OrderPagination from "../features/orders/OrderPagination";
+import PaginationStandalone from "../components/common/PaginationStandalone";
 import AddOrderForm from "../features/orders/AddOrderForm";
 
 import { getOrders } from "../services/orderService";
@@ -131,12 +131,13 @@ export default function OrdersPage() {
         />
 
         {/* PAGINATION */}
-        <OrderPagination
-          page={page}
+        <PaginationStandalone
+          currentPage={page}
           totalPages={totalPages}
+          onChangePage={setPage}
           totalItems={filteredOrders.length}
-          limit={limit}
-          onPageChange={setPage}
+          perPage={limit}
+          showInfo={true}
         />
 
       </main>

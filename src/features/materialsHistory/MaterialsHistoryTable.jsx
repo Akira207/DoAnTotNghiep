@@ -3,8 +3,6 @@ import React from "react";
 export default function MaterialsHistoryTable({
   items = [],
   page = 1,
-  totalPages = 1,
-  setPage = () => {},
   onEdit,
 }) {
   if (!items.length) {
@@ -126,8 +124,7 @@ export default function MaterialsHistoryTable({
                   <span className="text-sm font-black text-primary">
                     {(
                       (item.price || 0) * (item.quantity || 0)
-                    ).toLocaleString("vi-VN")}{" "}
-                    đ
+                    ).toLocaleString("vi-VN")} đ
                   </span>
                 </td>
 
@@ -143,52 +140,6 @@ export default function MaterialsHistoryTable({
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Pagination - FIX CHUẨN BACKEND */}
-      <div className="px-6 py-4 bg-white flex items-center justify-between border-t border-slate-100">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Trang {page} / {totalPages}
-        </p>
-
-        <div className="flex items-center gap-2">
-          {/* Prev */}
-          <button
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-            className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-40"
-          >
-            <span className="material-symbols-outlined text-base">
-              chevron_left
-            </span>
-          </button>
-
-          {/* Pages */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
-                p === page
-                  ? "bg-primary text-white"
-                  : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-
-          {/* Next */}
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages}
-            className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-40"
-          >
-            <span className="material-symbols-outlined text-base">
-              chevron_right
-            </span>
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import KPISection from "../features/dashBoard/KPISection";
 import ChartSection from "../features/dashBoard/ChartSection";
 import StatusCard from "../features/dashBoard/StatusCard";
 import NewOrdersTable from "../features/dashBoard/NewOrdersTable";
+import AddOrderForm from "../features/orders/AddOrderForm";
 
 import { getOrders } from "../services/orderService";
 import { getAllProducts } from "../services/productService";
@@ -15,6 +16,7 @@ import { getUsers } from "../services/userService";
 
 export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     orders: [],
     products: [],
@@ -78,8 +80,8 @@ export default function DashboardPage() {
 
       {/* Main */}
       <main className="md:ml-[280px] p-6 lg:p-10 space-y-10">
-        <DashboardHeader />
-        
+        <DashboardHeader onCreate={() => setOpenCreate(true)} />
+
         {error && (
           <div className="p-4 bg-red-100 text-red-800 rounded-lg">
             {error}
@@ -107,6 +109,17 @@ export default function DashboardPage() {
           </>
         )}
       </main>
+
+      {/* MODAL CREATE */}
+      {openCreate && (
+        <AddOrderForm
+          onClose={() => setOpenCreate(false)}
+          onSuccess={() => {
+            fetchDashboardData();
+            setOpenCreate(false);
+          }}
+        />
+      )}
     </div>
   );
 }

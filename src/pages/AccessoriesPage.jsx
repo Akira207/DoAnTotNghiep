@@ -6,7 +6,7 @@ import MobileHeader from "../components/layouts/MobileHeader";
 
 import AccessoryHeader from "../features/accessory/AccessoryHeader";
 import AccessoryGrid from "../features/accessory/AccessoryGrid";
-import AccessoryPagination from "../features/accessory/AccessoryPagination";
+import PaginationStandalone from "../components/common/PaginationStandalone";
 import AddAccessoryForm from "../features/accessory/AddAccessoryForm";
 
 import { getAccessories } from "../services/accessoryService";
@@ -100,10 +100,10 @@ export default function AccessoriesPage() {
           <>
             <AccessoryGrid accessories={accessories} onEdit={handleEdit} />
 
-            <AccessoryPagination
-              page={page}
+            <PaginationStandalone
+              currentPage={page}
               totalPages={totalPages}
-              onChange={setPage}
+              onChangePage={setPage}
             />
           </>
         )}

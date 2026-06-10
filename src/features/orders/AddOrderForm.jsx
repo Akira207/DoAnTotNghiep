@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import { getWarehouse } from "../../services/warehouseService";
 
 const API = "http://localhost:5000/api";
@@ -31,8 +31,8 @@ export default function AddOrderForm({ onClose, onSuccess }) {
     const fetchData = async () => {
       try {
         const [cRes, pRes, wData] = await Promise.all([
-          axios.get(`${API}/customers`),
-          axios.get(`${API}/products`),
+          api.get("/customers"),
+          api.get("/products"),
           getWarehouse(),
         ]);
 
@@ -126,7 +126,7 @@ export default function AddOrderForm({ onClose, onSuccess }) {
         };
       }
 
-      const res = await axios.post(`${API}/orders/create-full-order`, payload);
+      const res = await api.post("/orders/create-full-order", payload);
 
       alert("Tạo đơn thành công!");
       onSuccess?.(res.data);

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import useDebounce from "../../hooks/useDebounce";
 
 import Sidebar from "../../components/layouts/SideBar";
 import MobileHeader from "../../components/layouts/MobileHeader";
@@ -8,6 +9,7 @@ import WarehouseTable from "../../features/productsWarehouse/WarehouseTable";
 import WarehouseBottomCards from "../../features/productsWarehouse/WarehouseBottomCards";
 import WarehouseCreateModal from "../../features/productsWarehouse/WarehouseCreateModal";
 import WarehouseEditModal from "../../features/productsWarehouse/WarehouseEditModal";
+import PaginationTable from "../../components/common/PaginationTable";
 
 import { getWarehouse } from "../../services/warehouseService";
 
@@ -19,9 +21,21 @@ export default function ProductsWarehousePage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  // Pagination & Search State
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const debouncedSearch = useDebounce(search, 500);
+
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     fetchWarehouse();
@@ -44,6 +58,27 @@ export default function ProductsWarehousePage() {
     }
   };
 
+  // Filter and Pagination Logic
+  const filteredItems = useMemo(() => {
+    const keyword = debouncedSearch.toLowerCase().trim();
+    if (!keyword) return warehouseItems;
+
+    return warehouseItems.filter((item) => {
+      const product = item.productId || item.product || {};
+      const name = product?.name || "";
+      const category = product?.category || "";
+
+      return (
+        name.toLowerCase().includes(keyword) ||
+        category.toLowerCase().includes(keyword) ||
+        (item.sku && item.sku.toLowerCase().includes(keyword))
+      );
+    });
+  }, [warehouseItems, debouncedSearch]);
+
+  const totalPages = Math.ceil(filteredItems.length / limit);
+  const paginatedItems = filteredItems.slice((page - 1) * limit, page * limit);
+
   return (
     <div className="bg-background text-on-background min-h-screen">
       {/* Overlay */}
@@ -61,9 +96,7 @@ export default function ProductsWarehousePage() {
       <MobileHeader onOpenSidebar={toggleSidebar} />
 
       <main className="p-4 md:p-8 lg:ml-[280px]">
-        {/* <!-- Dashboard Content --> */}
         <div className="space-y-8 max-w-[1600px] mx-auto w-full pb-12">
-          {/* warehouse header */}
           <WarehouseHeader onRefresh={fetchWarehouse} />
 
           {error && (
@@ -80,18 +113,28 @@ export default function ProductsWarehousePage() {
 
           {!loading && (
             <>
-              {/* warehouse stats */}
               <WarehouseStats items={warehouseItems} />
 
-              <WarehouseTable
-                items={warehouseItems}
-                onRefresh={fetchWarehouse}
-                onCreate={() => setIsCreateOpen(true)}
-                onEdit={(item) => {
-                  setSelectedItem(item);
-                  setIsEditOpen(true);
-                }}
-              />
+              <div className="flex flex-col">
+                <WarehouseTable
+                  items={paginatedItems}
+                  search={search}
+                  setSearch={setSearch}
+                  onRefresh={fetchWarehouse}
+                  onCreate={() => setIsCreateOpen(true)}
+                  onEdit={(item) => {
+                    setSelectedItem(item);
+                    setIsEditOpen(true);
+                  }}
+                  page={page}
+                />
+                <PaginationTable
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onChangePage={setPage}
+                />
+              </div>
+
               <WarehouseCreateModal
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
@@ -104,7 +147,6 @@ export default function ProductsWarehousePage() {
                 onUpdated={fetchWarehouse}
               />
 
-              {/* warehouse bottom cards */}
               <WarehouseBottomCards items={warehouseItems} />
             </>
           )}

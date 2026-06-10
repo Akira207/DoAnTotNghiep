@@ -35,10 +35,12 @@ export default function AddProductForm({
         name: product.name || "",
         category: product.category || "",
         material: product.material || "",
-        width: product.width || "",
-        height: product.height || "",
-        depth: product.depth || "",
-        price: product.price || "",
+        width: typeof product.width === "string" ? product.width.replace(/[^0-9.]/g, "") : product.width || "",
+        height: typeof product.height === "string" ? product.height.replace(/[^0-9.]/g, "") : product.height || "",
+        depth: typeof product.depth === "string" ? product.depth.replace(/[^0-9.]/g, "") : product.depth || "",
+        price: typeof product.price === "string"
+               ? product.price.replace(/,/g, "")
+               : product.price || "",
         description: product.description || "",
       });
 
@@ -161,10 +163,22 @@ export default function AddProductForm({
       />
 
       {/* SIZE */}
-      <div className="grid grid-cols-3 gap-2">
-        <input name="width" value={form.width} onChange={handleChange} placeholder="Rộng" className="border px-2 py-1"/>
-        <input name="height" value={form.height} onChange={handleChange} placeholder="Cao" className="border px-2 py-1"/>
-        <input name="depth" value={form.depth} onChange={handleChange} placeholder="Sâu" className="border px-2 py-1"/>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-600">Kích thước (cm)</label>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-gray-400 ml-1">Rộng</span>
+            <input name="width" type="number" value={form.width} onChange={handleChange} placeholder="0" className="border px-2 py-1 rounded"/>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-gray-400 ml-1">Cao</span>
+            <input name="height" type="number" value={form.height} onChange={handleChange} placeholder="0" className="border px-2 py-1 rounded"/>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-gray-400 ml-1">Sâu</span>
+            <input name="depth" type="number" value={form.depth} onChange={handleChange} placeholder="0" className="border px-2 py-1 rounded"/>
+          </div>
+        </div>
       </div>
 
       {/* CATEGORY */}
@@ -200,11 +214,24 @@ export default function AddProductForm({
       {/* PREVIEW */}
       <div className="flex gap-2 flex-wrap">
         {preview.map((src, i) => (
-          <img
-            key={i}
-            src={src}
-            className="w-16 h-16 object-cover rounded"
-          />
+          <div key={i} className="relative group">
+            <img
+              src={src}
+              className="w-16 h-16 object-cover rounded"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const newPreview = preview.filter((_, index) => index !== i);
+                setPreview(newPreview);
+                // Lưu ý: việc xóa preview ở đây chỉ ảnh hưởng UI
+                // Nếu muốn đồng bộ xóa file thực sự cần API xóa ảnh riêng
+              }}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              ×
+            </button>
+          </div>
         ))}
       </div>
 

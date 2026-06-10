@@ -1,41 +1,28 @@
-import axios from "axios";
+import api from "./api";
 
-const API_URL = "http://localhost:5000/api/payments";
+const API_URL = "/payments";
 
-// ✅ Helper to extract data from API response
-const getResponseData = (response) => response.data || response;
-
-// GET ALL PAYMENTS
 export const getPayments = async () => {
-  const res = await axios.get(API_URL);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.get(API_URL);
+  return res.data.data || res.data;
 };
 
-// GET PAYMENT BY ID
 export const getPaymentById = async (id) => {
-  const res = await axios.get(`${API_URL}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.get(`${API_URL}/${id}`);
+  return res.data.data || res.data;
 };
 
-// CREATE PAYMENT
 export const createPayment = async (paymentData) => {
-  const res = await axios.post(API_URL, paymentData);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.post(API_URL, paymentData);
+  return res.data.data || res.data;
 };
 
-// UPDATE PAYMENT
 export const updatePayment = async (id, paymentData) => {
-  const res = await axios.put(`${API_URL}/${id}`, paymentData);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.put(`${API_URL}/${id}`, paymentData);
+  return res.data.data || res.data;
 };
 
-// DELETE PAYMENT
 export const deletePayment = async (id) => {
-  const res = await axios.delete(`${API_URL}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.delete(`${API_URL}/${id}`);
+  return res.data.data || res.data;
 };

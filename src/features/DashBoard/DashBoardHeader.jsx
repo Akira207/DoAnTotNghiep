@@ -1,4 +1,4 @@
-const DashboardHeader = () => {
+const DashboardHeader = ({ onCreate }) => {
   const today = new Date();
 
   const formattedDate = today.toLocaleDateString("vi-VN", {
@@ -29,7 +29,10 @@ const DashboardHeader = () => {
           Xuất báo cáo
         </button>
 
-        <button className="bg-primary text-white px-5 py-2.5 rounded font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity">
+        <button
+          onClick={onCreate}
+          className="bg-primary text-white px-5 py-2.5 rounded font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
+        >
           <span
             className="material-symbols-outlined text-[20px]"
             data-icon="add"

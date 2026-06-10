@@ -8,7 +8,7 @@ import ProductionHeader from "../features/production/ProductionHeader";
 import ProductionFilters from "../features/production/ProductionFilters";
 import ProductionSummary from "../features/production/ProductionSummary";
 import ProductionGrid from "../features/production/ProductionGrid";
-import ProductionPagination from "../features/production/ProductionPagination";
+import PaginationStandalone from "../components/common/PaginationStandalone";
 
 import ProductionDetailModal from "../features/production/ProductionDetailModal";
 import ProductionCreateModal from "../features/production/ProductionCreateModal";
@@ -127,11 +127,13 @@ export default function ProductionPage() {
           onDetail={handleOpenDetail}
         />
 
-        <ProductionPagination
-          page={page}
-          total={tasks.length}
-          limit={limit}
-          onPageChange={setPage}
+        <PaginationStandalone
+          currentPage={page}
+          totalPages={Math.ceil(tasks.length / limit)}
+          onChangePage={setPage}
+          totalItems={tasks.length}
+          perPage={limit}
+          showInfo={true}
         />
 
       </main>

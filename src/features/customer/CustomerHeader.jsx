@@ -14,11 +14,11 @@ export default function AccessoryHeader({ onOpenForm, onSearch }) {
           </nav>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-on-surface font-headline mb-1">
-            Danh mục Phụ Kiện
+            Danh mục Khách Hàng
           </h1>
 
           <p className="text-on-surface-variant text-sm">
-            Quản lý danh sách phụ kiện
+            Quản lý danh sách Khách hàng
           </p>
         </div>
 
@@ -34,7 +34,7 @@ export default function AccessoryHeader({ onOpenForm, onSearch }) {
             <input
               onChange={(e) => onSearch?.(e.target.value)}
               type="text"
-              placeholder="Tìm kiếm phụ kiện..."
+              placeholder="Tìm kiếm khách hàng..."
               className="pl-10 pr-4 py-2.5 w-full sm:w-64 bg-surface-container-high border-none rounded-sm text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
             />
           </div>
@@ -45,7 +45,7 @@ export default function AccessoryHeader({ onOpenForm, onSearch }) {
             className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-sm font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dim transition-all active:scale-[0.98]"
           >
             <span className="material-symbols-outlined text-lg">add</span>
-            Thêm phụ kiện mới
+            Thêm Khách hàng mới
           </button>
         </div>
       </div>

@@ -1,83 +1,38 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
 
-export default function UsersStats() {
-  const [roles, setRoles] = useState([
+export default function UsersStats({ users = [] }) {
+  // Tính toán số lượng dựa trên prop users truyền từ Page
+  const adminCount = users.filter((u) => u.role === "admin").length;
+  const accountantCount = users.filter((u) => u.role === "accountant").length;
+  const workerCount = users.filter((u) => u.role === "worker").length;
+  const total = users.length;
+
+  const roles = [
     {
       label: "Quản trị viên",
       role: "admin",
-      count: 0,
+      count: adminCount,
       box: "bg-primary-container border-primary",
       text: "text-primary",
     },
     {
       label: "Kế toán",
       role: "accountant",
-      count: 0,
+      count: accountantCount,
       box: "bg-secondary-container border-secondary",
       text: "text-secondary",
     },
     {
       label: "Công nhân",
       role: "worker",
-      count: 0,
+      count: workerCount,
       box: "bg-tertiary-container border-tertiary",
       text: "text-tertiary",
     },
-  ]);
-
-  const [total, setTotal] = useState(0);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/users");
-
-        // API của bạn trả: { success: true, data: users }
-        const users = res.data.data || [];
-
-        const adminCount = users.filter((u) => u.role === "admin").length;
-        const accountantCount = users.filter(
-          (u) => u.role === "accountant"
-        ).length;
-        const workerCount = users.filter((u) => u.role === "worker").length;
-
-        setRoles([
-          {
-            label: "Quản trị viên",
-            role: "admin",
-            count: adminCount,
-            box: "bg-primary-container border-primary",
-            text: "text-primary",
-          },
-          {
-            label: "Kế toán",
-            role: "accountant",
-            count: accountantCount,
-            box: "bg-secondary-container border-secondary",
-            text: "text-secondary",
-          },
-          {
-            label: "Công nhân",
-            role: "worker",
-            count: workerCount,
-            box: "bg-tertiary-container border-tertiary",
-            text: "text-tertiary",
-          },
-        ]);
-
-        setTotal(users.length);
-      } catch (err) {
-        console.error("Fetch users stats error:", err);
-      }
-    };
-
-    fetchUsers();
-  }, []);
+  ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-
       {/* ROLE STATS */}
       <div className="md:col-span-8 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-6">

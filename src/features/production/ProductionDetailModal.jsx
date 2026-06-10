@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../services/api";
+import { getCurrentUser } from "../../services/authService";
 
 const STATUS_FLOW = ["pending", "in-progress", "completed"];
 
@@ -12,6 +13,9 @@ const STATUS_LABEL = {
 const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
   const [editMode, setEditMode] = useState(false);
   const [localStatus, setLocalStatus] = useState(item?.status);
+  const user = getCurrentUser();
+  const isAuthorizedToUpdate = user?.role === "admin" || user?.role === "worker";
+  const isAuthorizedToDelete = user?.role === "admin" || user?.role === "accountant";
 
   useEffect(() => {
     setLocalStatus(item?.status);
@@ -59,15 +63,26 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
   // DELETE TASK
   // =========================
   const handleDelete = async () => {
+    if (item?.status === "completed") {
+      alert("Lệnh sản xuất đã hoàn thành, không thể xoá");
+      return;
+    }
+
+    if (!user?.role || (user.role !== "admin" && user.role !== "accountant")) {
+      alert("Bạn không có quyền xoá lệnh sản xuất này");
+      return;
+    }
+
     if (!window.confirm("Bạn có chắc chắn muốn xóa lệnh sản xuất này không?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/production-tasks/${item._id}`);
+      await api.delete(`/production-tasks/${item._id}`);
       onUpdated?.();
       onClose?.();
     } catch (err) {
       console.error("DELETE ERROR:", err);
-      alert("Không thể xóa lệnh sản xuất này.");
+      const errorMessage = err.response?.data?.message || "Không thể xóa lệnh sản xuất này.";
+      alert(errorMessage);
     }
   };
 
@@ -76,8 +91,8 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
   // =========================
   const handleSave = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/api/production-tasks/${item._id}`,
+      await api.put(
+        `/production-tasks/${item._id}`,
         { status: localStatus },
       );
 
@@ -86,6 +101,8 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
       onClose?.();
     } catch (err) {
       console.error(err);
+      const errorMessage = err.response?.data?.message || "Cập nhật thất bại";
+      alert(errorMessage);
     }
   };
 
@@ -222,11 +239,16 @@ const ProductionDetailModal = ({ isOpen, onClose, item, onUpdated }) => {
 
           {!editMode ? (
             <button
+              disabled={item.status === "completed" || !isAuthorizedToUpdate}
               onClick={() => setEditMode(true)}
-              className="px-10 py-3 bg-gradient-to-r from-[#007BFF] to-[#0056b3] text-white font-bold rounded-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
+              className={`px-10 py-3 font-bold rounded-sm shadow-lg transition-all flex items-center gap-2 ${
+                item.status === "completed" || !isAuthorizedToUpdate
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#007BFF] to-[#0056b3] text-white hover:shadow-xl hover:-translate-y-0.5"
+              }`}
             >
               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>sync</span>
-              Cập nhật trạng thái
+              {item.status === "completed" ? "Đã hoàn thành" : (!isAuthorizedToUpdate ? "Không có quyền cập nhật" : "Cập nhật trạng thái")}
             </button>
           ) : (
             <div className="flex gap-3">

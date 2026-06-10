@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../services/api";
 
 const API = "http://localhost:5000/api";
 
@@ -40,7 +40,7 @@ export default function UpdateOrderStatusModal({
 
       // 👉 CREATE PAYMENT FIRST (nếu có)
       if (amount && Number(amount) > 0) {
-        await axios.post(`${API}/payments`, {
+        await api.post(`/payments`, {
           orderId,
           amount: Number(amount),
           paymentMethod: method,
@@ -48,7 +48,7 @@ export default function UpdateOrderStatusModal({
       }
 
       // 👉 UPDATE ORDER SECOND
-      await axios.put(`${API}/orders/${orderId}`, {
+      await api.put(`/orders/${orderId}`, {
         status,
         note: status === "cancelled" ? cancelReason : note,
       });
@@ -59,7 +59,8 @@ export default function UpdateOrderStatusModal({
       onClose();
     } catch (err) {
       console.error("UPDATE ERROR:", err);
-      alert("Cập nhật thất bại");
+      const errorMessage = err.response?.data?.message || "Cập nhật thất bại";
+      alert(errorMessage);
     }
   };
 

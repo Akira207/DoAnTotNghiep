@@ -1,13 +1,10 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:5000/api/material-imports";
-
-// ✅ Helper to extract data from API response
-const getResponseData = (response) => response.data || response;
+const API = "/material-imports";
 
 // GET ALL MATERIAL IMPORTS
 export const getMaterialImports = async (search = "", page = 1) => {
-  const res = await axios.get(API, {
+  const res = await api.get(API, {
     params: {
       materialName: search,
       page,
@@ -20,28 +17,24 @@ export const getMaterialImports = async (search = "", page = 1) => {
 
 // GET MATERIAL IMPORT BY ID
 export const getMaterialImportById = async (id) => {
-  const res = await axios.get(`${API}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.get(`${API}/${id}`);
+  return res.data.data || res.data;
 };
 
 // CREATE MATERIAL IMPORT
 export const createMaterialImport = async (materialData) => {
-  const res = await axios.post(API, materialData);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.post(API, materialData);
+  return res.data.data || res.data;
 };
 
 // UPDATE MATERIAL IMPORT
 export const updateMaterialImport = async (id, materialData) => {
-  const res = await axios.put(`${API}/${id}`, materialData);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.put(`${API}/${id}`, materialData);
+  return res.data.data || res.data;
 };
 
 // DELETE MATERIAL IMPORT
 export const deleteMaterialImport = async (id) => {
-  const res = await axios.delete(`${API}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.delete(`${API}/${id}`);
+  return res.data.data || res.data;
 };

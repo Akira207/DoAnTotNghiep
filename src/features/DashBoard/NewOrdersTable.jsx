@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -7,7 +8,7 @@ const getStatusColor = (status) => {
     case "in-progress":
       return { bg: "bg-secondary-container/30", text: "text-secondary", label: "Đang xử lý" };
     case "pending":
-      return { bg: "bg-secondary-container/30", text: "text-secondary", label: "Thiết kế" };
+      return { bg: "bg-secondary-container/30", text: "text-secondary", label: "Chờ sản xuất" };
     case "paused":
       return { bg: "bg-error-container/20", text: "text-error", label: "Tạm dừng" };
     case "waiting_payment":
@@ -28,6 +29,7 @@ const getInitials = (name = "") => {
 
 const NewOrdersTable = ({ orders = [] }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
   const PAGE_SIZE = 10;
 
   // Pagination logic
@@ -43,7 +45,10 @@ const NewOrdersTable = ({ orders = [] }) => {
           <h3 className="text-xl font-black tracking-tight">
             Danh sách đơn hàng mới
           </h3>
-          <button className="text-primary font-bold text-sm hover:underline">
+          <button
+            onClick={() => navigate("/orders")}
+            className="text-primary font-bold text-sm hover:underline"
+          >
             Xem tất cả
           </button>
         </div>
@@ -60,7 +65,10 @@ const NewOrdersTable = ({ orders = [] }) => {
         <h3 className="text-xl font-black tracking-tight">
           Danh sách đơn hàng mới
         </h3>
-        <button className="text-primary font-bold text-sm hover:underline">
+        <button
+          onClick={() => navigate("/orders")}
+          className="text-primary font-bold text-sm hover:underline"
+        >
           Xem tất cả
         </button>
       </div>
@@ -94,9 +102,13 @@ const NewOrdersTable = ({ orders = [] }) => {
               const initials = getInitials(customerName);
 
               return (
-                <tr key={order._id} className="hover:bg-surface-container-low/50 transition-colors">
+                <tr
+                  key={order._id}
+                  onClick={() => navigate(`/orders/${order._id}`)}
+                  className="hover:bg-surface-container-low/50 transition-colors cursor-pointer"
+                >
                   <td className="px-8 py-4 font-bold text-primary">
-                    #{order._id?.substring(0, 6)?.toUpperCase() || "N/A"}
+                    {order.orderCode || `#${order._id?.slice(-6) || "N/A"}`}
                   </td>
                   <td className="px-8 py-4">
                     <div className="flex items-center gap-3">

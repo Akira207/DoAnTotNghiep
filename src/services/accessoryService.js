@@ -1,6 +1,6 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:5000/api/accessories";
+const API = "/accessories";
 
 // GET ALL (có query)
 export const getAccessories = async ({
@@ -8,7 +8,7 @@ export const getAccessories = async ({
   page = 1,
   limit = 8,
 } = {}) => {
-  const res = await axios.get(API, {
+  const res = await api.get(API, {
     params: { keyword, page, limit },
   });
 
@@ -17,7 +17,7 @@ export const getAccessories = async ({
 
 // CREATE (upload ảnh)
 export const createAccessory = async (formData) => {
-  const res = await axios.post(API, formData, {
+  const res = await api.post(API, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
@@ -26,7 +26,7 @@ export const createAccessory = async (formData) => {
 
 // UPDATE
 export const updateAccessory = async (id, formData) => {
-  const res = await axios.put(`${API}/${id}`, formData, {
+  const res = await api.put(`${API}/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
@@ -35,5 +35,5 @@ export const updateAccessory = async (id, formData) => {
 
 // DELETE
 export const deleteAccessory = async (id) => {
-  await axios.delete(`${API}/${id}`);
+  await api.delete(`${API}/${id}`);
 };

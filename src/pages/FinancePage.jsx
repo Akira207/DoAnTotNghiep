@@ -90,6 +90,7 @@ export default function FinancePage() {
             <RecentTransactions
               payments={financeData.payments}
               orders={financeData.orders}
+              onReload={fetchFinanceData}
             />
           </div>
         )}

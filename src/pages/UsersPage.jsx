@@ -103,7 +103,7 @@ export default function UsersPage() {
         />
 
         {/* STATS */}
-        <UsersStats />
+        <UsersStats users={users} />
 
         {/* TABLE */}
         <UsersTable

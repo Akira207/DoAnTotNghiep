@@ -1,11 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { deleteOrder } from "../../services/orderService";
+import { getCurrentUser } from "../../services/authService";
 
-const API = "http://localhost:5000/api";
-
-// =========================
-// STATUS MAP
-// =========================
 const statusMap = {
   pending: {
     label: "Chờ sản xuất",
@@ -35,12 +31,17 @@ const statusMap = {
 
 export default function OrderTable({ orders = [], onReload }) {
   const navigate = useNavigate();
+  const user = getCurrentUser();
+  const isAuthorizedToDelete = user?.role === "admin" || user?.role === "accountant";
 
-  // =========================
-  // DELETE
-  // =========================
   const handleDelete = async (e, id) => {
-    e.stopPropagation(); // ❗ không cho click row
+    e.stopPropagation();
+
+    const order = orders.find((o) => o._id === id);
+    if (order?.status === "completed") {
+      alert("Đơn hàng đã hoàn thành, không thể xoá");
+      return;
+    }
 
     const confirmDelete = window.confirm(
       "Bạn có chắc muốn xoá đơn hàng này không?"
@@ -49,15 +50,13 @@ export default function OrderTable({ orders = [], onReload }) {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API}/orders/${id}`);
-
+      await deleteOrder(id);
       alert("Xoá thành công!");
-
-      // reload lại danh sách
       onReload?.();
     } catch (err) {
       console.error(err);
-      alert("Xoá thất bại");
+      const errorMessage = err.response?.data?.message || "Xoá thất bại";
+      alert(errorMessage);
     }
   };
 
@@ -65,8 +64,6 @@ export default function OrderTable({ orders = [], onReload }) {
     <div className="mt-6 overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm">
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-collapse text-left">
-
-          {/* HEADER */}
           <thead className="bg-surface-container">
             <tr className="text-xs uppercase text-on-surface-variant">
               <th className="px-6 py-4 font-bold">Mã đơn</th>
@@ -79,31 +76,23 @@ export default function OrderTable({ orders = [], onReload }) {
           </thead>
 
           <tbody className="divide-y divide-slate-100">
-
             {orders.map((o) => (
               <tr
                 key={o._id}
                 className="hover:bg-slate-50 cursor-pointer"
                 onClick={() => navigate(`/orders/${o._id}`)}
               >
-                {/* MÃ ĐƠN */}
                 <td className="px-6 py-5 font-bold text-primary">
                   {o.orderCode || `#${o._id.slice(-6)}`}
                 </td>
-
-                {/* KHÁCH HÀNG */}
                 <td className="px-6 py-5 font-semibold">
                   {o.customerId?.name || "—"}
                 </td>
-
-                {/* NGÀY */}
                 <td className="px-6 py-5">
                   {o.orderDate
                     ? new Date(o.orderDate).toLocaleDateString("vi-VN")
                     : "—"}
                 </td>
-
-                {/* TRẠNG THÁI */}
                 <td className="px-6 py-5">
                   <span
                     className={`px-3 py-1 text-[10px] rounded font-bold uppercase ${
@@ -114,19 +103,18 @@ export default function OrderTable({ orders = [], onReload }) {
                     {statusMap[o.status]?.label || "Chờ sản xuất"}
                   </span>
                 </td>
-
-                {/* TỔNG TIỀN */}
                 <td className="px-6 py-5 text-right font-black">
                   {o.totalAmount
                     ? o.totalAmount.toLocaleString("vi-VN") + "đ"
                     : "0đ"}
                 </td>
-
-                {/* ACTION */}
                 <td className="px-6 py-5 text-center">
                   <button
                     onClick={(e) => handleDelete(e, o._id)}
-                    className="px-3 py-1 text-xs font-bold bg-error text-white rounded hover:opacity-80"
+                    disabled={!isAuthorizedToDelete}
+                    className={`px-3 py-1 text-xs font-bold text-white rounded hover:opacity-80 ${
+                      isAuthorizedToDelete ? "bg-error" : "bg-slate-400 cursor-not-allowed"
+                    }`}
                   >
                     Xoá
                   </button>
@@ -134,7 +122,6 @@ export default function OrderTable({ orders = [], onReload }) {
               </tr>
             ))}
 
-            {/* EMPTY */}
             {orders.length === 0 && (
               <tr>
                 <td
@@ -145,7 +132,6 @@ export default function OrderTable({ orders = [], onReload }) {
                 </td>
               </tr>
             )}
-
           </tbody>
         </table>
       </div>

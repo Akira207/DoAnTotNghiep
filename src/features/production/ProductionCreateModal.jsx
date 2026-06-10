@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAllProducts } from "../../services/productService";
-import axios from "axios";
+import api from "../../services/api";
 
 const ProductionCreateModal = ({ isOpen, onClose, onCreated }) => {
   const [products, setProducts] = useState([]);
@@ -58,12 +58,14 @@ const ProductionCreateModal = ({ isOpen, onClose, onCreated }) => {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:5000/api/production-tasks", form);
+      await api.post("/production-tasks", form);
 
       onCreated?.();
       onClose();
     } catch (err) {
       console.error(err);
+      const errorMessage = err.response?.data?.message || "Lỗi tạo lệnh sản xuất";
+      alert(errorMessage);
     }
   };
 

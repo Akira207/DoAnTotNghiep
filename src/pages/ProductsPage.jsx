@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import useDebounce from "../hooks/useDebounce";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
 import ProductsHeader from "../features/product/ProductsHeader";
 import ProductGrid from "../features/product/ProductGrid";
-import ProductsPagination from "../features/product/ProductsPagination";
+import PaginationStandalone from "../components/common/PaginationStandalone";
 import AddProductForm from "../features/product/AddProductForm";
 import ProductDetailModal from "../features/product/ProductDetailModal";
 
@@ -17,8 +18,6 @@ export default function ProductsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   const [open, setOpen] = useState(false); // modal add/edit
@@ -28,30 +27,23 @@ export default function ProductsPage() {
 
   // search
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
 
   // pagination
   const [page, setPage] = useState(1);
   const perPage = 8;
 
-  // ===============================
-  // Sidebar scroll lock
-  // ===============================
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
   }, [isSidebarOpen]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  // ===============================
-  // FETCH PRODUCTS
-  // ===============================
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const data = await getAllProducts();
       setProducts(data);
-      setFiltered(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,37 +55,33 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  // ===============================
-  // DEBOUNCE SEARCH
-  // ===============================
+  // Reset page when search changes
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [search]);
+    setPage(1);
+  }, [debouncedSearch]);
 
   // ===============================
-  // FILTER
+  // FILTER & PAGINATION LOGIC
   // ===============================
-  useEffect(() => {
+  const filtered = useMemo(() => {
     const keyword = debouncedSearch.toLowerCase();
+    if (!keyword) return products;
 
-    const result = products.filter(
+    return products.filter(
       (p) =>
         p.name?.toLowerCase().includes(keyword) ||
         p.category?.toLowerCase().includes(keyword) ||
         p.material?.toLowerCase().includes(keyword)
     );
-
-    setFiltered(result);
-    setPage(1);
   }, [debouncedSearch, products]);
 
-  // ===============================
-  // DELETE
-  // ===============================
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / perPage);
+  const currentProducts = useMemo(() => {
+    const startIndex = (page - 1) * perPage;
+    return filtered.slice(startIndex, startIndex + perPage);
+  }, [filtered, page]);
+
   const handleDelete = async (id) => {
     if (!confirm("Xóa sản phẩm này?")) return;
 
@@ -106,22 +94,9 @@ export default function ProductsPage() {
     }
   };
 
-  // ===============================
-  // PAGINATION
-  // ===============================
-  const total = filtered.length;
-  const startIndex = (page - 1) * perPage;
-  const currentProducts = filtered.slice(
-    startIndex,
-    startIndex + perPage
-  );
-
-  // ===============================
-  // RENDER
-  // ===============================
   return (
     <div className="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
-      
+
       {/* Overlay */}
       <div
         onClick={toggleSidebar}
@@ -141,7 +116,7 @@ export default function ProductsPage() {
 
       {/* MAIN */}
       <main className="lg:ml-[280px] min-h-screen p-4 md:p-8 lg:p-10">
-        
+
         {/* HEADER */}
         <ProductsHeader
           onAdd={() => {
@@ -168,11 +143,13 @@ export default function ProductsPage() {
         )}
 
         {/* PAGINATION */}
-        <ProductsPagination
-          total={total}
-          perPage={perPage}
+        <PaginationStandalone
           currentPage={page}
-          onPageChange={setPage}
+          totalPages={totalPages}
+          totalItems={total}
+          perPage={perPage}
+          showInfo={true}
+          onChangePage={setPage}
         />
 
         {/* ADD / EDIT MODAL */}

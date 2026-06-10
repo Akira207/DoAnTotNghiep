@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
-import useDebounce from "../hooks/useDebounce"; // ✅ FIX LỖI
+import useDebounce from "../hooks/useDebounce";
 
 import Sidebar from "../components/layouts/SideBar";
 import MobileHeader from "../components/layouts/MobileHeader";
-import CustomerHeader from "../features/custumer/CustomerHeader";
-import CustomerStats from "../features/custumer/CustomerStats";
-import CustomerTable from "../features/custumer/CustomerTable";
-import CustomerActivity from "../features/custumer/CustomerActivity";
-import CustomerAnalysis from "../features/custumer/CustomerAnalysis";
-import AddCustomerForm from "../features/custumer/AddCustomerForm";
+import CustomerHeader from "../features/customer/CustomerHeader";
+import CustomerStats from "../features/customer/CustomerStats";
+import CustomerTable from "../features/customer/CustomerTable";
+import CustomerActivity from "../features/customer/CustomerActivity";
+import CustomerAnalysis from "../features/customer/CustomerAnalysis";
+import AddCustomerForm from "../features/customer/AddCustomerForm";
+import PaginationTable from "../components/common/PaginationTable";
 
 import { getCustomers } from "../services/customerService";
 
@@ -58,7 +59,6 @@ export default function CustomerPage() {
 
   // pagination logic
   const totalPages = Math.ceil(filtered.length / pageSize);
-
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return (
@@ -66,10 +66,9 @@ export default function CustomerPage() {
       {/* Overlay */}
       <div
         onClick={toggleSidebar}
-        className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition-all duration-300
-        ${
+        className={`fixed inset-0 bg-black/50 z-[50] md:hidden transition ${
           isSidebarOpen
-            ? "opacity-100 pointer-events-auto"
+            ? "opacity-100"
             : "opacity-0 pointer-events-none"
         }`}
       />
@@ -80,17 +79,23 @@ export default function CustomerPage() {
       <main className="p-4 md:p-8 lg:ml-[280px] space-y-6">
         <CustomerHeader
           onSearch={setKeyword}
-          onOpenForm={() => setFormOpen(true)} // (chưa có form thì để tạm)
+          onOpenForm={() => setFormOpen(true)}
         />
 
         <CustomerStats customers={customers} />
 
-        <CustomerTable
-          customers={paginated}
-          page={page}
-          totalPages={totalPages}
-          onChangePage={setPage}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-col">
+            <CustomerTable
+              customers={paginated}
+            />
+            <PaginationTable
+              currentPage={page}
+              totalPages={totalPages}
+              onChangePage={setPage}
+            />
+          </div>
+        </div>
 
         <div className="grid lg:grid-cols-12 gap-6">
           <CustomerActivity />

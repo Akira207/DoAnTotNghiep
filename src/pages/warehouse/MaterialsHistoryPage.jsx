@@ -3,13 +3,14 @@ import useDebounce from "../../hooks/useDebounce";
 
 import Sidebar from "../../components/layouts/SideBar";
 import MobileHeader from "../../components/layouts/MobileHeader";
-import MaterialsHistoryHeader from "../../features/masterialsHistory/MaterialsHistoryHeader";
-import MaterialsHistoryStats from "../../features/masterialsHistory/MaterialsHistoryStats";
-import MaterialsHistoryActions from "../../features/masterialsHistory/MaterialsHistoryActions";
-import MaterialsHistoryTable from "../../features/masterialsHistory/MaterialsHistoryTable";
-import MaterialsReportBanner from "../../features/masterialsHistory/MaterialsReportBanner";
-import MaterialsImportModal from "../../features/masterialsHistory/MaterialsImportModal";
-import MaterialsHistoryEditModal from "../../features/masterialsHistory/MaterialsHistoryEditModal";
+import MaterialsHistoryHeader from "../../features/materialsHistory/MaterialsHistoryHeader";
+import MaterialsHistoryStats from "../../features/materialsHistory/MaterialsHistoryStats";
+import MaterialsHistoryActions from "../../features/materialsHistory/MaterialsHistoryActions";
+import MaterialsHistoryTable from "../../features/materialsHistory/MaterialsHistoryTable";
+import MaterialsReportBanner from "../../features/materialsHistory/MaterialsReportBanner";
+import MaterialsImportModal from "../../features/materialsHistory/MaterialsImportModal";
+import MaterialsHistoryEditModal from "../../features/materialsHistory/MaterialsHistoryEditModal";
+import PaginationTable from "../../components/common/PaginationTable";
 
 import {
   getMaterialImports,
@@ -28,7 +29,7 @@ export default function MaterialsHistoryPage() {
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
 
-  // PAGINATION (FIX LỖI)
+  // PAGINATION
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -117,16 +118,20 @@ export default function MaterialsHistoryPage() {
                 totalValue={totalValueAllPages}
               />
 
-              <MaterialsHistoryTable
-                items={materials}
-                page={page}
-                totalPages={totalPages}
-                setPage={setPage}
-                onEdit={(item) => {
-                  setSelectedItem(item);
-                  setShowEditModal(true);
-                }}
-              />
+              <div className="flex flex-col">
+                <MaterialsHistoryTable
+                  items={materials}
+                  onEdit={(item) => {
+                    setSelectedItem(item);
+                    setShowEditModal(true);
+                  }}
+                />
+                <PaginationTable
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onChangePage={setPage}
+                />
+              </div>
 
               <MaterialsReportBanner />
             </>

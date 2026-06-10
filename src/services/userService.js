@@ -1,41 +1,28 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:5000/api/users";
+const API = "/users";
 
-// ✅ Helper to extract data from API response
-const getResponseData = (response) => response.data || response;
-
-// GET ALL USERS
 export const getUsers = async () => {
-  const res = await axios.get(API);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.get(API);
+  return res.data.data || res.data;
 };
 
-// GET USER BY ID
 export const getUserById = async (id) => {
-  const res = await axios.get(`${API}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.get(`${API}/${id}`);
+  return res.data.data || res.data;
 };
 
-// CREATE USER
 export const createUser = async (userData) => {
-  const res = await axios.post(API, userData);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.post(API, userData);
+  return res.data.data || res.data;
 };
 
-// UPDATE USER
 export const updateUser = async (id, userData) => {
-  const res = await axios.put(`${API}/${id}`, userData);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.put(`${API}/${id}`, userData);
+  return res.data.data || res.data;
 };
 
-// DELETE USER
 export const deleteUser = async (id) => {
-  const res = await axios.delete(`${API}/${id}`);
-  const data = getResponseData(res);
-  return data.data || data;
+  const res = await api.delete(`${API}/${id}`);
+  return res.data.data || res.data;
 };
